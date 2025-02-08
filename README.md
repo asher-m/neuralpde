@@ -14,9 +14,9 @@ I've attempted to maintain consistent notation throughout.  However, in various 
 We're trying to understand, quantify, and classify ice flows in Earth's polar regions.  NOAA and NASA publish large sea ice concentration datasets dating back nearly 40 years.
 
 From observation, we believe the relevant physics to be governed by a forced advection-diffusion equation, like
-$$
+```math
     u_t = \nabla \cdot \left( \kappa \nabla u \right) + v \cdot \nabla u + f(x, t)
-$$
+```
 where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $v : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
 
 In more words/to play with the terminology, the author posits that one could describe this problem as an "anisotropic forced advection-diffusion" problem.  Another fun way of describing this problem may be as an "inhomogeneous heterogeneous advection-diffusion" problem, (where "inhomogeneous" refers to the inhomogeneity, that is, the forcing, and "heterogeneous" refers to the spatiotemporally varying diffusion and advection.)
@@ -35,21 +35,20 @@ But, like, it's probably fine.
 
 At this time, it seems a sensible loss function would be as,
 <!-- FIXME -- this does not seem correct -->
-$$
+```math
     L = \left\| \tilde{u}(t_n) - u(t_n) \right\|_{2, \Gamma} + \left\| \partial_t \tilde{u}(t_n) - \nabla \cdot \left( \kappa(t_n) \nabla u(t_n) \right) - v(t_n) \cdot \nabla u(t_n) - f(t_n) \right\|_{2, \Gamma}
-$$
+```
 
 Read [this section](#pinns-in-the-general-inverse-problem-context) about why this is a sensible choice.
 
 #### PINNs in the General Inverse Problem Context
 In the inverse problem context, PINNs are generally<sup>[ha, this section does what it says on the carton]</sup> used as a black-box for (I)BVP-type problems where we learn the parameters $\lambda$ of the differential operator $D$ allowing us to generate a solution for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)  Suppose we have the problem,
-$$
+```math
 \begin{aligned}
     u_t &= D[u; \lambda] & &\text{in } \Gamma \\
     u &= g & &\text{on } \partial\Gamma
-
 \end{aligned}
-$$
+```
 where $u : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$.
 
 We make some assumptions and observations about the problem and use these assumptions to inform our notation and following discussion:
@@ -59,35 +58,35 @@ We make some assumptions and observations about the problem and use these assump
 Below, we will use $u$ to represent the experimentally-recorded data of the solution, $\tilde{u}$ to represent the approximate solution generated with parameters determined by the PINN, and $\lambda$ and $\tilde{\lambda}$ to represent the true- and PINN-determined parameters to the differntial operator $D$, respectively.
 
 Additionally note that, while $u$ is analogous to the exact solution of the PDE in the continuum (by assumption,) it is discrete.  In particular, $u$ is defined only on points like,
-$$
+```math
     u(x_{ij}, t_n)
-$$
+```
 where $t_n$ is the time at timestep $n \in [1, 2, \dots, N]$ and $x_{ij}$ is the location at $(x_i, y_j)$ for $i \in [1, 2, \dots, M_x]$ and $j \in [1, 2, \dots, M_y]$ (note the overloaded notation on $x$.)  We will omit coordinates and indices when the risk of ambiguity does not exist.
 
 Suppose we have a PINN $P$ such that, for any boundary data $g$, $P$ yields $\tilde{\lambda}$,
-$$
+```math
     \tilde{\lambda} = P[g]
-$$
+```
 
 We then calculate an approximate solution using some suitable, accurate-enough integrator<sup>[[see note on integrators](#note-on-multi-stage-and-multi-step-methods)]</sup> $I$, like,
-$$
+```math
 \tilde{u} = I[g; \lambda]
-$$
+```
 
 Finally, then, there are two basic considerations: as observers (scientists, etc...) we care about the solution error.  Note, however, that as *better* observers (*better* scientists, etc...), we ought to also care about error in the governing physics encoded in the PDE itself, that is a misbalance in the left- and right-hand sides of the PDE.  This naturally leads us to consider the two residuals,
-$$
+```math
     L_u = \| \tilde{u} - u \|_\Gamma
-$$
+```
 and
-$$
+```math
     L_D = \| \tilde{u}_t - D[\tilde{u}; \lambda] \|_\Gamma
-$$
+```
 where $\| \cdot \|_\Gamma$ is used to denote a suitable norm calculated over all (known) points on the interior of $\Gamma$, $L_u$ represents the solution residual (or loss) and $L_D$ represents the differential residual (or loss.)  We calculate the necessary partials of $\tilde{u}$ similarly to calcualting $\tilde{u}$ itself using a good-enough finite-difference scheme.
 
 Simply, then, we'll use the sum of these two measures of loss to train our PINN,
-$$
+```math
 L = L_u + L_D
-$$
+```
 
 See section of [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations) on the discovery of PDE from data from which this notation is adapted.<sup>[[see note on terminology](#terminology-note)]</sup>
 
@@ -101,13 +100,13 @@ We're not discovering PDE here, we're just solving for the parameters that make 
 
 #### Author's note
 At this point in the project, it is not clear if $\kappa$, $v$, and $f$ are calculated such that we can calculate
-$$
+```math
     u(x, t_{n + 1}) = I\left[ u; \kappa, v, f \right]
-$$
+```
 where $I$ is some sensible integration scheme (such as RK4 or a multi-stage method<sup>[[see note](#note-on-multi-stage-and-multi-step-methods)]</sup>) and $u(x, t_{n + 1})$ is **unknown.**  Such a method would be **extrapolative.** Or, alternatively,
-$$
+```math
     u(x, t_n) = I\left[ u; \kappa, v, f \right]
-$$
+```
 where $I$ is again some sensible integration scheme<sup>[[again see note](#note-on-multi-stage-and-multi-step-methods)]</sup> and $u(x, t_n)$ is **known.**  Such a method would be **interpolative.**
 
 In fact, it's not actually clear that the two things above are different.  Specifically, will we attempt to use this algorithm where we *do not* know $u(x, t_{n + 1})$?  After all, are we building an interpolative ***or*** extrapolative algorithm?
@@ -122,12 +121,12 @@ It's not clear how to bootstrap this method.  Darn.
 
 ### Current Work
 Right now, we've simplified the bigger picture and are attempting to learn (with reference to the relevant literature) the diffusion parameter $\kappa$ of a diffusion-type PDE,
-$$
+```math
 \begin{aligned}
     u_t &= \nabla \cdot \left( \kappa \nabla u \right) & &\text{in } \Gamma \\
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
-$$
+```
 
 The structure of this algorithm is shown in this figure:
 <p align="center">
