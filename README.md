@@ -18,7 +18,7 @@ We're trying to understand, quantify, and classify ice flows in Earth's polar re
 
 From observation, we believe the relevant physics to be governed by a forced advection-diffusion equation, like
 ```math
-    u_t = \nabla \cdot \left( \kappa \nabla u \right) + v \cdot \nabla u + f(x, t)
+    u_t = \nabla \cdot \left( \kappa \nabla u \right) + v \cdot \nabla u + f
 ```
 where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $v : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
 
