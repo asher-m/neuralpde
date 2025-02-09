@@ -30,13 +30,13 @@ But, like, it's probably fine.
 ## The Approach
 ### The Endgame
 <p align="center">
-  <img src="readme-figure/algorithm-schematic.drawio.svg"/>
+  <img src="readme-figure/complete-diagram.drawio.svg"/>
 </p>
 
 At this time, it seems a sensible loss function would be as,
 <!-- FIXME -- this does not seem correct -->
 ```math
-    L = \left\| \tilde{u}(t_n) - u(t_n) \right\|_{2, \Gamma} + \left\| \partial_t \tilde{u}(t_n) - \nabla \cdot \left( \kappa(t_n) \nabla u(t_n) \right) - v(t_n) \cdot \nabla u(t_n) - f(t_n) \right\|_{2, \Gamma}
+    L = \left\| \tilde{u}(t_n) - u(t_n) \right\|_{2, \Gamma} + \left\| \partial_t \tilde{u}(t_n) - \nabla \cdot \left( \kappa(t_n) \nabla \tilde{u}(t_n) \right) - v(t_n) \cdot \nabla \tilde{u}(t_n) - f(t_n) \right\|_{2, \Gamma}
 ```
 
 Read [this section](#pinns-in-the-general-inverse-problem-context) about why this is a sensible choice.
@@ -130,7 +130,7 @@ Right now, we've simplified the bigger picture and are attempting to learn (with
 
 The structure of this algorithm is shown in this figure:
 <p align="center">
-  <img src="readme-figure/algorithm-simple-diffusion.drawio.svg"/>
+  <img src="readme-figure/simpleDiffusion-diagram.drawio.svg"/>
 </p>
 
 ## Diagrams
