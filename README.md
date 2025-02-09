@@ -101,6 +101,31 @@ Rather than a multi-stage scheme, multi-step schemes can be used to integrate th
 #### Note on bootstrapping this method
 It's not (yet) clear how to bootstrap this method, in particular for the use of a multi-step integration scheme.  Darn.
 
+
+### The Endgame
+Right now, what we want really isn't too complex:
+<p align="center">
+  <img src="readme-figure/complete-diagram.drawio.svg"/>
+</p>
+
+Notationally, we use $u$ to denote experimental measurements of the solution, which we assume to be exact measurements of the true solution at discrete locations, $\tilde{u}$ to denote the approximate solution calculated using estimates $\tilde{\kappa}$, $\tilde{v}$, and $\tilde{f}$ of the true PDE parameters $\kappa$, $v$, and $f$.
+
+All that said, things get a little more complicated when we begin to understand the complexity required to train such a PINN.  Right now, this seems like a sensible loss function:
+```math
+    L = \left\| u(t_{n+1}) - \tilde{u}(t_{n+1}) \right\|_\Gamma + \left\| u_t(t_n) - \nabla \cdot \left( \tilde{\kappa}(t_n) \nabla u(t_n) \right) - \tilde{v}(t_n) \cdot \nabla u(t_n) - \tilde{f}(t_n) \right\|_\Gamma
+```
+This loss function corresponds to this information diagram:
+<p align="center">
+  <img src="readme-figure/complete-loss.drawio.svg"/>
+</p>
+
+Read [this section](#pinns-in-the-general-inverse-problem-context) about why this is a sensible choice.
+
+
+#### Note on a small problem
+This loss function does not enforce $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$!
+
+
 ### Current Work
 Right now, we've simplified the bigger picture and are attempting to learn (with reference to the relevant literature) the diffusion parameter $\kappa$ of a diffusion-type PDE,
 ```math
