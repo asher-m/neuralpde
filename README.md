@@ -134,11 +134,22 @@ Right now, we've simplified the bigger picture and are attempting to learn (with
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
 ```
+where $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \R$ and $\kappa: \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \R$.
 
 The structure of this algorithm is shown in this figure:
 <p align="center">
   <img src="readme-figure/diffusion-diagram.drawio.svg"/>
 </p>
+
+A sensible loss function, analogous to that discussed in [this section](#pinns-in-the-general-inverse-problem-context), seems to be as follows:
+```math
+    L = \left\| u(t_{n+1}) - \tilde{u}(t_{n+1}) \right\|_\Gamma + \left\| u_t(t_n) - \nabla \cdot \left( \tilde{\kappa}(t_n) \nabla u(t_n) \right) \right\|_\Gamma
+```
+which corresponds to this information diagram:
+<p align="center">
+  <img src="readme-figure/diffusion-loss.drawio.svg"/>
+</p>
+
 
 ## Diagrams
 There is no standard for diagrams (except possibly Microsoft Visio, which is itself ideologically- and cost-prohibitive,) but, for this project, I am using [draw.io](https://draw.io/) for diagrams.
