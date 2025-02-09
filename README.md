@@ -32,20 +32,9 @@ But, like, it's probably fine.
 
 
 ## The Approach
-### The Endgame
-<p align="center">
-  <img src="readme-figure/complete-diagram.drawio.svg"/>
-</p>
 
-At this time, it seems a sensible loss function would be as,
-<!-- FIXME -- this does not seem correct -->
-```math
-    L = \left\| \tilde{u}(t_n) - u(t_n) \right\|_{2, \Gamma} + \left\| \partial_t \tilde{u}(t_n) - \nabla \cdot \left( \kappa(t_n) \nabla \tilde{u}(t_n) \right) - v(t_n) \cdot \nabla \tilde{u}(t_n) - f(t_n) \right\|_{2, \Gamma}
-```
 
-Read [this section](#pinns-in-the-general-inverse-problem-context) about why this is a sensible choice.
-
-#### PINNs in the General Inverse Problem Context
+### PINNs in the General Inverse Problem Context
 In the inverse problem context, PINNs are generally<sup>[ha, this section does what it says on the carton]</sup> used as a black-box for (I)BVP-type problems where we learn the parameters $\lambda$ of the differential operator $D$ allowing us to generate a solution for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)  Suppose we have the problem,
 ```math
 \begin{aligned}
@@ -55,13 +44,9 @@ In the inverse problem context, PINNs are generally<sup>[ha, this section does w
 ```
 where $u : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$.
 
-We make some assumptions and observations about the problem and use these assumptions to inform our notation and following discussion:
-- Experimentally-recorded data is an exact measurement of the exact solution to the governing PDE.
-- The true parameters $\lambda$ of the differential operator are unknowable.
-
 Below, we will use $u$ to represent the experimentally-recorded data of the solution, $\tilde{u}$ to represent the approximate solution generated with parameters determined by the PINN, and $\lambda$ and $\tilde{\lambda}$ to represent the true- and PINN-determined parameters to the differntial operator $D$, respectively.
 
-Additionally note that, while $u$ is analogous to the exact solution of the PDE in the continuum (by assumption,) it is discrete.  In particular, $u$ is defined only on points like,
+We assume $u$ is an exact measurement of the exact solution at the discrete positions in spacetime at which $u$ is measured.  Then, in particular, $u$ is defined only on points like,
 ```math
     u(x_{ij}, t_n)
 ```
@@ -74,16 +59,18 @@ Suppose we have a PINN $P$ such that, for any boundary data $g$, $P$ yields $\ti
 
 We then calculate an approximate solution using some suitable, accurate-enough integrator<sup>[[see note on integrators](#note-on-multi-stage-and-multi-step-methods)]</sup> $I$, like,
 ```math
-\tilde{u} = I[g; \lambda]
+\tilde{u} = I[g; \tilde{\lambda}]
 ```
+
+Note that, in the preceding discussion of these (as-of-yet imaginary) machines that produce $\tilde{\lambda}$ and $\tilde{u}$, the boundary data $g$ can be replaced with any known state of $u$, effectively just translating the problem in time.  We use $g$ to clarify notation, but, generally speaking, we will use a known state of $u$, say $u(t_n)$, for $g$, from which we attempt to calculate $\tilde{u}(t_{n + 1})$.
 
 Finally, then, there are two basic considerations: as observers (scientists, etc...) we care about the solution error.  Note, however, that as *better* observers (*better* scientists, etc...), we ought to also care about error in the governing physics encoded in the PDE itself, that is a misbalance in the left- and right-hand sides of the PDE.  This naturally leads us to consider the two residuals,
 ```math
-    L_u = \| \tilde{u} - u \|_\Gamma
+    L_u = \| u - \tilde{u} \|_\Gamma
 ```
 and
 ```math
-    L_D = \| \tilde{u}_t - D[\tilde{u}; \lambda] \|_\Gamma
+    L_D = \| u_t - D[u; \tilde{\lambda}] \|_\Gamma
 ```
 where $\| \cdot \|_\Gamma$ is used to denote a suitable norm calculated over all (known) points on the interior of $\Gamma$, $L_u$ represents the solution residual (or loss) and $L_D$ represents the differential residual (or loss.)  We calculate the necessary partials of $\tilde{u}$ similarly to calcualting $\tilde{u}$ itself using a good-enough finite-difference scheme.
 
@@ -92,36 +79,27 @@ Simply, then, we'll use the sum of these two measures of loss to train our PINN,
 L = L_u + L_D
 ```
 
-See section of [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations) on the discovery of PDE from data from which this notation is adapted.<sup>[[see note on terminology](#terminology-note)]</sup>
+We hedge on a sufficiently capable ML suite to be able to autodifferentiate this loss function and associated compositions of integrators and derivatives.
+
+See the section on the discovery of PDE from data from [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations), from which this notation is adapted.<sup>[[see note on terminology](#terminology-note)]</sup>
 
 Also [see this paper](https://doi.org/10.1016/j.jcp.2018.10.045), refered to by the PINN Wikipedia page.
 
-##### Terminological note
+
+#### Terminological note
 As far as this author is concerned, the relevant physics encoded in a PDE is not determined by the coefficients but by the differential operators that define the PDE.  Accordingly, describing this type of inverse problem as the "discovery of PDE" seems categorically incorrect or a gross aggrandizement of one's own work.
 
 We're not discovering PDE here, we're just solving for the parameters that make the model work.  These two things are not the same.
 
 
-#### Author's note
-At this point in the project, it is not clear if $\kappa$, $v$, and $f$ are calculated such that we can calculate
-```math
-    u(x, t_{n + 1}) = I\left[ u; \kappa, v, f \right]
-```
-where $I$ is some sensible integration scheme (such as RK4 or a multi-stage method<sup>[[see note](#note-on-multi-stage-and-multi-step-methods)]</sup>) and $u(x, t_{n + 1})$ is **unknown.**  Such a method would be **extrapolative.** Or, alternatively,
-```math
-    u(x, t_n) = I\left[ u; \kappa, v, f \right]
-```
-where $I$ is again some sensible integration scheme<sup>[[again see note](#note-on-multi-stage-and-multi-step-methods)]</sup> and $u(x, t_n)$ is **known.**  Such a method would be **interpolative.**
-
-In fact, it's not actually clear that the two things above are different.  Specifically, will we attempt to use this algorithm where we *do not* know $u(x, t_{n + 1})$?  After all, are we building an interpolative ***or*** extrapolative algorithm?
-
-##### Note on multi-stage and multi-step methods
-Because $\kappa$, $v$, and $f$ are spatiotemporally variable, it is unclear how (or wrong) to use a multi-stage scheme to calculate a latter timestep precisely because $\kappa$, $v$, and $f$ vary between timesteps, (at least assuming their inter-step variance is significant.  This can be disregarded if they can be assumed to have small inter-step variance.)
+#### Note on multi-stage and multi-step methods
+Because $\kappa$, $v$, and $f$ are spatiotemporally variable, (respectively the $\tilde{\cdot}$ versions, as well,) it is unclear how (or wrong) to use a multi-stage scheme to calculate a latter timestep precisely because $\kappa$, $v$, and $f$ vary between timesteps, (at least assuming their inter-step variance is significant.  This can be disregarded if they can be assumed to have small inter-step variance.)
 
 Rather than a multi-stage scheme, multi-step schemes can be used to integrate the PDE, relying only on the good-enough approximations for $\kappa$, $v$ and $f$.
 
-##### Note on bootstrapping this method
-It's not clear how to bootstrap this method.  Darn.
+
+#### Note on bootstrapping this method
+It's not (yet) clear how to bootstrap this method, in particular for the use of a multi-step integration scheme.  Darn.
 
 ### Current Work
 Right now, we've simplified the bigger picture and are attempting to learn (with reference to the relevant literature) the diffusion parameter $\kappa$ of a diffusion-type PDE,
