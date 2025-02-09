@@ -134,7 +134,7 @@ Right now, we've simplified the bigger picture and are attempting to learn (with
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
 ```
-where $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \R$ and $\kappa: \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \R$.
+where $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ and $\kappa: \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$.
 
 The structure of this algorithm is shown in this figure:
 <p align="center">
