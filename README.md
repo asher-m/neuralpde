@@ -2,13 +2,16 @@
 
 Research code for solving the forced advection-diffusion inverse problem for polar sea ice concentration.
 
+
 ## Note on This Document
 While it is my hope that this summary of the methods and current work can always be complete, correct, and concise, it is the case that this page serves as a place to record ideas and thoughts on how to proceed, which, by their nature, can virtually never satisfies those desirable qualities.
 
 If you spot any egregious errors, please open a bug with the details or your questions or a pull request with the correction.
 
+
 ### Notation
 I've attempted to maintain consistent notation throughout.  However, in various places certain notations are more or less useful, and I possess not the foresight to use such notation throughout or it was unnecessarily cumbersome to use everywhere.  In these places, I have used the best notation to lead to the least ambiguity about the topics discussed.
+
 
 ## The Problem
 We're trying to understand, quantify, and classify ice flows in Earth's polar regions.  NOAA and NASA publish large sea ice concentration datasets dating back nearly 40 years.
@@ -26,6 +29,7 @@ Note that $u$ is known (at least known on some grid in space-time.)  Accordingly
 In general, we do not know how to solve this problem.<sup>[why not?]</sup>  In this context, it is unclear if this problem is well-posed (does there exist a unique solution for each set of inputs, at least subject to reasonable assumptions?) or even well-defined (is it possible to solve this problem given the input data?)
 
 But, like, it's probably fine.
+
 
 ## The Approach
 ### The Endgame
@@ -130,7 +134,7 @@ Right now, we've simplified the bigger picture and are attempting to learn (with
 
 The structure of this algorithm is shown in this figure:
 <p align="center">
-  <img src="readme-figure/simpleDiffusion-diagram.drawio.svg"/>
+  <img src="readme-figure/diffusion-diagram.drawio.svg"/>
 </p>
 
 ## Diagrams
