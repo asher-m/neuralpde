@@ -81,7 +81,7 @@ L = L_u + L_D
 
 We hedge on a sufficiently capable ML suite to be able to autodifferentiate this loss function and associated compositions of integrators and derivatives.
 
-See the section on the discovery of PDE from data from [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations), from which this notation is adapted.<sup>[[see note on terminology](#terminology-note)]</sup>
+See the section on the discovery of PDE from data from [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations), from which this notation is adapted.<sup>[[see note on terminology](#terminological-note)]</sup>
 
 Also [see this paper](https://doi.org/10.1016/j.jcp.2018.10.045), refered to by the PINN Wikipedia page.
 
