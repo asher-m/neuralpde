@@ -1,0 +1,10 @@
+{
+    "NOAA_G02202_V4_north_daily": {
+        "source": "https://noaadata.apps.nsidc.org/NOAA/G02202_V4/north/daily/",
+        "cutdirs": 4
+    },
+    "NOAA_G02202_V5_north_daily": {
+        "source": "https://noaadata.apps.nsidc.org/NOAA/G02202_V5/north/daily/",
+        "cutdirs": 4
+    }
+}
