@@ -153,3 +153,48 @@ which corresponds to this information diagram:
 
 ## Diagrams
 There is no standard for diagrams (except possibly Microsoft Visio, which is itself ideologically- and cost-prohibitive,) but, for this project, I am using [draw.io](https://draw.io/) for diagrams.
+
+
+## The Software
+The author suggests users of this software use Anaconda/conda to maintain the python environment in which this code operates, but you should use whatever works and what you know best.
+
+### Conda
+The following commands should Just Work™ with conda to create an environment called neuralpde in which this code will run.  Begin by creating the environment,
+```shell
+conda create -n neuralpde python=3.11 ipython scipy numpy matplotlib jupyter jupyterlab tqdm basemap basemap-data-hires netcdf4 -c conda-forge
+```
+You must also install a suitable version of PyTorch.  This was previously possible with conda, but the PyTorch collaboration ceased its official support for the platform, so PyPI/pip is the only remaining convenient way of doing so.
+
+Be sure to activate the new environment you just created.  In this tutorial, that is probably with the command `conda activate neuralpde`.
+
+Go to [pytorch.org](https://pytorch.org/), scroll down, and select a suitable version of PyTorch for your machine.  With CUDA, the command you need is most likely,
+```shell
+conda activate neuralpde
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+```
+Without CUDA, it is most likely,
+```shell
+conda activate neuralpde
+pip install torch torchvision torchaudio
+```
+
+### Not Conda
+Uhhh, somehow install these packages:
+```
+ipython
+scipy
+numpy
+matplotlib
+jupyter
+jupyterlab
+tqdm
+basemap
+basemap-data-hires
+netcdf4
+torch
+torchvision
+torchaudio
+```
+where you install the most appropriate versions of the `torch*` packages for your system.
+
+
