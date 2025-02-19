@@ -7,7 +7,7 @@ Download data files from [this link](https://noaadata.apps.nsidc.org/NOAA/G02202
 ```shell
 mkdir -p data/V4/
 cd data/V4/
-wget --recursive --no-parent --no-host-directories --cut-dirs 4 --timestamping --execute robots=off https://noaadata.apps.nsidc.org/NOAA/G02202_V4/north/aggregate/
+wget --recursive --no-parent --no-host-directories --cut-dirs 4 --timestamping --execute robots=off --accept *daily*.nc https://noaadata.apps.nsidc.org/NOAA/G02202_V4/north/aggregate/
 ```
 
 ## Version 5
@@ -18,5 +18,5 @@ Download data files from [this link](https://noaadata.apps.nsidc.org/NOAA/G02202
 ```shell
 mkdir -p data/V5/
 cd data/V5/
-wget --recursive --no-parent --no-host-directories --cut-dirs 4 --timestamping --execute robots=off https://noaadata.apps.nsidc.org/NOAA/G02202_V5/north/aggregate/
+wget --recursive --no-parent --no-host-directories --cut-dirs 4 --timestamping --execute robots=off --accept *daily*.nc https://noaadata.apps.nsidc.org/NOAA/G02202_V5/north/aggregate/
 ```
