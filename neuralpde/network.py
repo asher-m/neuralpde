@@ -25,9 +25,9 @@ def RK(q: int = 100):
         q:      Integer number of stages.
     """
     d = np.loadtxt(Path(__file__).parent / f'../raissi-2019/Utilities/IRK_weights/Butcher_IRK{q}.txt').astype(np.float32)
-    A = d[:q**2].reshape((q, q))
-    b = d[q**2: q**2 + q]
-    c = d[q**2 + q:]
+    A = np2torch(d[:q**2].reshape((q, q)))
+    b = np2torch(d[q**2: q**2 + q])
+    c = np2torch(d[q**2 + q:])
 
     return A, b, c
 
