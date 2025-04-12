@@ -120,27 +120,29 @@ class Network(nn.Module):
         Train the PINN.
 
         Arguments:
-            x:          Spatial coordinates of each cell in the solution u.  Must be of size `((2,) + shape[1:])`
+            x:          x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                        specified at model initialization.
+            y:          y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
                         specified at model initialization.
             u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
             epochs:     Number of epochs to run.
             lr:         Learning rate passed to Adam optimizer.
         """
         # FIXME: this might all be nonsense and it'll just work without this
-        x, u = np2torch(x).requires_grad_(True), np2torch(u).requires_grad_(False)
+        x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         optimizer = optim.Adam(self.parameters(), lr=lr)
 
         # get true solution values
-        u_i = np2torch(u[len(u) // 2])
-        u_f = np2torch(u[len(u) // 2 + 1])
+        u_i = u[len(u) // 2]
+        u_f = u[len(u) // 2 + 1]
 
         self.train()
         losses = list()
         for i in range(epochs):
             optimizer.zero_grad()
 
-            uj = self.forward(torch.cat(x, u))
-            loss = self.loss(self, x, uj, u_i, u_f)
+            uj = self.forward(torch.stack((x, y, *u)))
+            loss = self.loss(self, x, y, uj, u_i, u_f)
             loss.backward()
             optimizer.step()
 
