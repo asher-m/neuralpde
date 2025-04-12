@@ -2,14 +2,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import warnings
 
 from pathlib import Path
 from typing import List, Tuple
 
-# DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DEVICE = 'cpu'
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 
+DEVICE = 'cpu'  # TODO: remove this
+warnings.warn('Forcing PyTorch on CPU!')
 
 
 def RK(q: int = 100):
