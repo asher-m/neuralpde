@@ -4,5 +4,6 @@ and forcing of sea ice flows in the Arctic.
 """
 
 from . import nc
+from . import network
 
 __version__ = '0.0.1'
