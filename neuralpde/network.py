@@ -88,10 +88,9 @@ class Network(nn.Module):
 
         self.rk_A, self.rk_b, self.rk_c = RK(self.q)
 
-        # need 2 channels for spatial coordinates; need shape[0] channels for time axis of solution data 
-        self.channels_in = 2 + self.shape[0]
+        self.channels_in = 2 + self.shape[0]  # 2 channels for spatial coords + shape[0] channels for input timesteps
         self.channels_hidden = 2**(int(np.log2(self.channels_in)) + 1)
-        self.channels_out = q
+        self.channels_out = 4 + q  # 4 channels for kappa, v (2d vector) and f + q channels for intermediate RK stages
 
         self.layers = nn.Sequential(
             nn.Conv2d(self.channels_in, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
