@@ -77,3 +77,15 @@ class Network(nn.Module):
             nn.ReLU()
         )
         self.out = nn.Conv2d(self.channels_hidden, self.channels_out, kernel_size=self.kernel, padding=self.padding)
+
+    def forward(self, data: torch.tensor):
+        """
+        Push data through the network for training.
+
+        Arguments:
+            data:       Stacked and exported (i.e., moved to GPU if desired) data, where `data[0:2]` are spatial
+                        coordinate arrays each of size `shape[1:]`, and `data[2:]` is a collection of stacked solution
+                        data.
+        """
+        return self.out(self.layers(data))
+
