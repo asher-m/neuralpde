@@ -10,8 +10,9 @@ from typing import List, Tuple
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 
-DEVICE = 'cpu'  # TODO: remove this
-warnings.warn('Forcing PyTorch on CPU!')
+# dt = 1, right?
+dt = 1
+
 
 
 def RK(q: int = 100):
