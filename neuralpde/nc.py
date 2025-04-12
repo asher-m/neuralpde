@@ -23,22 +23,6 @@ Return the date as a datetime object.
 """
 
 
-def check_boundaries(indices: List[int] | Tuple[int], d: "SeaIceV4" | "SeaIceV5") -> None:
-    """
-    Verify that boundaries at each index in `indices` are the same (constant,) and fails if not.
-
-    Args:
-        indices:        List or tuple of indices to check, (you probably want these to be adjacent.)
-        d:              Sea ice data object.
-    """ 
-    indices = list(indices)   
-    assert np.all(d.flag_missing[indices[0]] == d.flag_missing[indices])
-    assert np.all(d.flag_land[indices[0]] == d.flag_land[indices])
-    assert np.all(d.flag_coast[indices[0]] == d.flag_coast[indices])
-    assert np.all(d.flag_lake[indices[0]] == d.flag_lake[indices])
-    assert np.all(d.flag_hole[indices[0]] == d.flag_hole[indices])
-
-
 class SeaIceV4():
     """
     NOAA/NSIDC version 4 sea ice data class.
@@ -141,3 +125,19 @@ class SeaIceV5():
     """
     def __init__(self):
         raise NotImplementedError()
+
+
+def check_boundaries(indices: List[int] | Tuple[int], d: SeaIceV4 | SeaIceV5) -> None:
+    """
+    Verify that boundaries at each index in `indices` are the same (constant,) and fails if not.
+
+    Args:
+        indices:        List or tuple of indices to check, (you probably want these to be adjacent.)
+        d:              Sea ice data object.
+    """ 
+    indices = list(indices)   
+    assert np.all(d.flag_missing[indices[0]] == d.flag_missing[indices])
+    assert np.all(d.flag_land[indices[0]] == d.flag_land[indices])
+    assert np.all(d.flag_coast[indices[0]] == d.flag_coast[indices])
+    assert np.all(d.flag_lake[indices[0]] == d.flag_lake[indices])
+    assert np.all(d.flag_hole[indices[0]] == d.flag_hole[indices])
