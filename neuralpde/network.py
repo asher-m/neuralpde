@@ -100,20 +100,28 @@ class Network(nn.Module):
             data:       Stacked and exported (i.e., moved to GPU if desired) data, where `data[0:2]` are spatial
                         coordinate arrays each of size `shape[1:]`, and `data[2:]` is a collection of stacked solution
                         data.
-        """
-        return self.out(self.layers(data))
 
-    def predict(self, x: np.ndarray, u: np.ndarray):
+        Returns a tensor on `DEVICE`.
+        """
+        outs = self.out(self.layers(data))
+        return outs
+
+    def predict(self, x: np.ndarray, y: np.ndarray, u: np.ndarray):
         """
         Push data through the network for evaluation.
 
         Arguments:
-            x:          Spatial coordinates of each cell in the solution u.  Must be of size `((2,) + shape[1:])`
+            x:          x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                        specified at model initialization.
+            y:          y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
                         specified at model initialization.
             u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
+
+        Returns a numpy array.
         """
         self.eval()
-        return torch2np(self.forward(torch.cat(np2torch((x, u)))))
+        x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
+        return torch2np(self.forward(torch.stack((x, y, *u))))
 
     def fit(self, x: np.ndarray, y: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
         """
