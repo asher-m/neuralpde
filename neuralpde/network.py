@@ -162,7 +162,7 @@ class Network(nn.Module):
 
         self.train()
         losses = list()
-        for i in range(epochs):
+        for e in range(epochs):
             optimizer.zero_grad()
 
             uj = self.forward(torch.stack((x, y, *u)))
@@ -171,7 +171,7 @@ class Network(nn.Module):
             optimizer.step()
 
             losses.append(loss.item())
-            if i % 10 == 0:
-                print(f'Epoch {i:5d}, loss {losses[-1]:10.2f}')
+            if e % 10 == 0:
+                print(f'Epoch {e:5d}, loss {losses[-1]:10.2f}')
 
         return losses
