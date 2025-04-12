@@ -86,10 +86,7 @@ class Network(nn.Module):
         assert self.kernel % 2 == 1, "Kernel size must be odd!"
         self.padding = self.kernel // 2
 
-        # kappa and f are scalar fields, v is a 2d vector field
-        self.kappa = nn.Parameter(torch.zeros(self.shape[1:]))
-        self.v = nn.Parameter(torch.zeros((2,) + self.shape[1:]))
-        self.f = nn.Parameter(torch.zeros(self.shape[1:]))
+        self.rk_A, self.rk_b, self.rk_c = RK(self.q)
 
         # need 2 channels for spatial coordinates; need shape[0] channels for time axis of solution data 
         self.channels_in = 2 + self.shape[0]
