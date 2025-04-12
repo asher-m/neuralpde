@@ -64,7 +64,7 @@ def torch2np(d):
 
 
 class Network(nn.Module):
-    def __init__(self, loss, q: int, shape: Tuple[int], kernel: int = 5) -> None:
+    def __init__(self, q: int, shape: Tuple[int], kernel: int = 5) -> None:
         """
         Initialize the PINN.
 
@@ -78,7 +78,6 @@ class Network(nn.Module):
         """
         super().__init__()
 
-        self.loss = loss
         self.q = q
         self.shape = shape
         self.kernel = kernel
@@ -135,21 +134,29 @@ class Network(nn.Module):
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         return torch2np(self.forward(torch.stack((x, y, *u))))
 
-    def fit(self, x: np.ndarray, y: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
+    def fit(self,
+            x: np.ndarray, y: np.ndarray,
+            u: np.ndarray,
+            loss_weights: np.ndarray,
+            epochs: int = 1000, lr: float = 1e-3,
+            do_graphs: bool = False
+        ):
         """
         Train the PINN.
 
         Arguments:
-            x:          x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                        specified at model initialization.
-            y:          y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                        specified at model initialization.
-            u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
-            epochs:     Number of epochs to run.
-            lr:         Learning rate passed to Adam optimizer.
+            x:              x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                            specified at model initialization.
+            y:              y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                            specified at model initialization.
+            u:              Solution data of each cell.  Must be of size `shape` specified at model initialization.
+            loss_weights:   Weights of each term in the loss.
+            epochs:         Number of epochs to run.
+            lr:             Learning rate passed to Adam optimizer.
+            do_graphs:      Make torchviz graphs of the computational graph.
         """
-        # FIXME: this might all be nonsense and it'll just work without this
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
+        loss_weights = np2torch(loss_weights)
         optimizer = optim.Adam(self.parameters(), lr=lr)
 
         # get true solution values
@@ -161,8 +168,61 @@ class Network(nn.Module):
         for e in range(epochs):
             optimizer.zero_grad()
 
-            uj = self.forward(torch.stack((x, y, *u)))
-            loss = self.loss(self, x, y, uj, u_i, u_f)
+            outs = self.forward(torch.stack((x, y, *u)))
+
+            # break out nn params
+            kappa = outs[0]
+            v1 = outs[1]
+            v2 = outs[2]
+            f = outs[3]
+            u_rk = outs[4:]
+
+            # gradient insanity
+            ones_kappa = torch.zeros_like(outs)
+            ones_kappa[0] = 1
+            ones_u_rk = list()
+            for i in range(self.q):
+                ones_u_rk.append(torch.zeros_like(outs))
+                ones_u_rk[i][4 + i] = 1
+            ones_u_rk.append(torch.ones_like(x).requires_grad_(True))  # for second derivatives
+
+            # compute gradients
+            kappa_x = torch.autograd.grad(outs, x, ones_kappa, create_graph=True)[0]
+            kappa_y = torch.autograd.grad(outs, y, ones_kappa, create_graph=True)[0]
+
+            u_rk_x = torch.empty_like(outs[4:])
+            u_rk_y = torch.empty_like(outs[4:])
+            u_rk_xx = torch.empty_like(outs[4:])
+            u_rk_yy = torch.empty_like(outs[4:])
+            for i in range(self.q):
+                u_rk_x[i] = torch.autograd.grad(outs, x, ones_u_rk[i], create_graph=True)[0]
+                u_rk_y[i] = torch.autograd.grad(outs, y, ones_u_rk[i], create_graph=True)[0]
+                u_rk_xx[i] = torch.autograd.grad(u_rk_x[i], x, ones_u_rk[-1], create_graph=True)[0]
+                u_rk_yy[i] = torch.autograd.grad(u_rk_y[i], y, ones_u_rk[-1], create_graph=True)[0]
+
+            # evaluate pde
+            pde = kappa[None, ...] * (u_rk_xx + u_rk_yy) + (kappa_x[None, ...] * u_rk_x + kappa_y[None, ...] * u_rk_y) + \
+                    (v1[None, ...] * u_rk_x + v2[None, ...] * u_rk_y) + f
+
+            # estimate solution with pde
+            uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
+            # u_hat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
+            uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b[None, ...]), pde)
+
+            # compute loss with estimate and actual solution
+            loss_u_i = torch.sum((uhat_i - u_i[None, ...])**2)
+            loss_u_f = torch.sum((uhat_f - u_f[None, ...])**2)
+
+            # compute other loss terms
+            loss_forcing = torch.sum(f**2)
+
+            # compute final loss
+            loss = torch.stack((loss_u_i, loss_u_f, loss_forcing)) @ loss_weights
+
+            # make graphs, if you want
+            if do_graphs:
+                break  # break, because we're not making graphs every time
+
             loss.backward()
             optimizer.step()
 
