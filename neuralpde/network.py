@@ -7,6 +7,10 @@ import warnings
 from pathlib import Path
 from typing import List, Tuple
 
+from torchviz import make_dot
+
+
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 DTYPE = torch.float32
 
@@ -221,6 +225,15 @@ class Network(nn.Module):
 
             # make graphs, if you want
             if do_graphs:
+                make_dot(kappa, params=dict(list(self.named_parameters()))).render('graph_kappa', format='pdf', cleanup=True)
+                make_dot(v1, params=dict(list(self.named_parameters()))).render('graph_v1', format='pdf', cleanup=True)
+                make_dot(f, params=dict(list(self.named_parameters()))).render('graph_f', format='pdf', cleanup=True)
+                make_dot(u_rk, params=dict(list(self.named_parameters()))).render('graph_u_rk', format='pdf', cleanup=True)
+                make_dot(kappa_x, params=dict(list(self.named_parameters()))).render('graph_kappa_x', format='pdf', cleanup=True)
+                make_dot(u_rk_x, params=dict(list(self.named_parameters()))).render('graph_u_rk_x', format='pdf', cleanup=True)
+                make_dot(u_rk_xx, params=dict(list(self.named_parameters()))).render('graph_u_rk_xx', format='pdf', cleanup=True)
+                make_dot(uhat_i, params=dict(list(self.named_parameters()))).render('graph_uhat_i', format='pdf', cleanup=True)
+                make_dot(uhat_f, params=dict(list(self.named_parameters()))).render('graph_uhat_f', format='pdf', cleanup=True)
                 break  # break, because we're not making graphs every time
 
             loss.backward()
