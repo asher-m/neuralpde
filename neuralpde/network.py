@@ -115,7 +115,7 @@ class Network(nn.Module):
         self.eval()
         return torch2np(self.forward(torch.cat(np2torch((x, u)))))
 
-    def train(self, x: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
+    def fit(self, x: np.ndarray, y: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
         """
         Train the PINN.
 
