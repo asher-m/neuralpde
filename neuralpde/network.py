@@ -89,6 +89,17 @@ class Network(nn.Module):
         """
         return self.out(self.layers(data))
 
+    def predict(self, x: np.ndarray, u: np.ndarray):
+        """
+        Push data through the network for evaluation.
+
+        Arguments:
+            x:          Spatial coordinates of each cell in the solution u.  Must be of size `((2,) + shape[1:])`
+                        specified at model initialization.
+            u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
+        """
+        self.eval()
+        return torch2data(self.forward(torch.cat(data2torch((x, u)))))
 
     def train(self, x: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
         """
