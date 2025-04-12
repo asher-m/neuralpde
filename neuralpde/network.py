@@ -28,25 +28,21 @@ def RK(q: int = 100):
     c = d[q**2 + q:]
 
     return A, b, c
+
+
+def np2torch(d):
     """
     Export numpy data to torch in every meaningful way, including sending it to the
     compute accelerator and casting it to the appropriate datatype.
-
-    Arguments:
-        x:          Spatial coordinates of each cell in the solution u.  Must be of size `((2,) + shape[1:])`
-                    specified at model initialization.
-        u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
     """
-    # FIXME: this might all be nonsense and it'll just work without this
-    x = torch.from_numpy(x).requires_grad_(True)
-    u = torch.from_numpy(u).requires_grad_(False)
-    return x, u
+    return torch.from_numpy(d).to(DEVICE, DTYPE)
 
-def torch2data(x, u):
+
+def torch2np(d):
     """
     Export torch data back to numpy.
     """
-    return x.detach().cpu().numpy(), u.detach().cpu().numpy()
+    return d.detach().cpu().numpy()
 
 
 class Network(nn.Module):
@@ -115,7 +111,7 @@ class Network(nn.Module):
             u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
         """
         self.eval()
-        return torch2data(self.forward(torch.cat(data2torch((x, u)))))
+        return torch2np(self.forward(torch.cat(np2torch((x, u)))))
 
     def train(self, x: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
         """
@@ -128,16 +124,21 @@ class Network(nn.Module):
             epochs:     Number of epochs to run.
             lr:         Learning rate passed to Adam optimizer.
         """
-        x, u = data2torch(np.concatenate((x, u)))
+        # FIXME: this might all be nonsense and it'll just work without this
+        x, u = np2torch(x).requires_grad_(True), np2torch(u).requires_grad_(False)
         optimizer = optim.Adam(self.parameters(), lr=lr)
+
+        # get true solution values
+        u_i = np2torch(u[len(u) // 2])
+        u_f = np2torch(u[len(u) // 2 + 1])
 
         self.train()
         losses = list()
         for i in range(epochs):
             optimizer.zero_grad()
 
-            output = self.forward(torch.cat(x, u))
-            loss = self.loss(self, x, output)
+            uj = self.forward(torch.cat(x, u))
+            loss = self.loss(self, x, uj, u_i, u_f)
             loss.backward()
             optimizer.step()
 
