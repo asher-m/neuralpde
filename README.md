@@ -156,6 +156,12 @@ There is no standard for diagrams (except possibly Microsoft Visio, which is its
 
 
 ## The Software
+There exist a few implementations of PINNs in various ML toolkits.  
+1. Raissi has [the original TensorFlow implementation](https://github.com/maziarraissi/PINNs) on Github that was used to produce the results for [the 2019 paper.](https://www.sciencedirect.com/science/article/abs/pii/S0021999118307125)
+2. [An updated repository](https://github.com/rezaakb/pinns-torch) built with PyTorch exists and provides probably a lot of the functionality I'm going to reimplement here.
+
+We're trying something related but different enough to warrant a unique/our own implementation.
+
 The author suggests users of this software use Anaconda/conda to maintain the python environment in which this code operates, but you should use whatever works and what you know best.
 
 ### Conda
