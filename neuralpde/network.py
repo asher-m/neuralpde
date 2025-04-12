@@ -15,6 +15,21 @@ dt = 1
 
 
 
+def normalize_xy(x: np.ndarray, y: np.ndarray) -> Tuple[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
+    """
+    Normalize spatial coordinates (from meters to unitless dimension on the interval [-1, 1]).
+
+    Returns a tuple of ((scalex, scaley), (x_normalized, y_normalized)).
+    """
+    assert len(x.shape) == 1 and len(y.shape) == 1, "I don't know how to handle multi-d arrays!"
+    scalex, scaley = np.ptp(x), np.ptp(y)
+    return (scalex, scaley), ((x - np.mean(x)) / scalex, (y - np.mean(y)) / scaley)
+
+
+def normalize_data(u: np.ndarray):
+    raise ValueError('Sea ice data already normalized!')
+
+
 def RK(q: int = 100):
     """
     Get an implicit Runge-Kutta scheme with `q` stages.
