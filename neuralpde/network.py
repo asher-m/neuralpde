@@ -89,3 +89,33 @@ class Network(nn.Module):
         """
         return self.out(self.layers(data))
 
+
+    def train(self, x: np.ndarray, u: np.ndarray, epochs: int = 1000, lr: float = 1e-3):
+        """
+        Train the PINN.
+
+        Arguments:
+            x:          Spatial coordinates of each cell in the solution u.  Must be of size `((2,) + shape[1:])`
+                        specified at model initialization.
+            u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
+            epochs:     Number of epochs to run.
+            lr:         Learning rate passed to Adam optimizer.
+        """
+        x, u = data2torch(np.concatenate((x, u)))
+        optimizer = optim.Adam(self.parameters(), lr=lr)
+
+        self.train()
+        losses = list()
+        for i in range(epochs):
+            optimizer.zero_grad()
+
+            output = self.forward(torch.cat(x, u))
+            loss = self.loss(self, x, output)
+            loss.backward()
+            optimizer.step()
+
+            losses.append(loss.item())
+            if i % 10 == 0:
+                print(f'Epoch {i:5d}, loss {losses[-1]:10.2f}')
+
+        return losses
