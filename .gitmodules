@@ -1,3 +1,6 @@
 [submodule "neuralice"]
 	path = neuralice
-	url = github:delaneymosier/neural-ice-copy.git
+	url = https://github.com/delaneymosier/neural-ice-copy.git
+[submodule "raissi-2019"]
+	path = raissi-2019
+	url = https://github.com/maziarraissi/PINNs.git
