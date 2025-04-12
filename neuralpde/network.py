@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+from pathlib import Path
 from typing import List, Tuple
 
 # DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -11,7 +12,22 @@ DTYPE = torch.float32
 
 
 
-def data2torch(x, u):
+def RK(q: int = 100):
+    """
+    Get an implicit Runge-Kutta scheme with `q` stages.
+
+    Default of 100 because similar problems seem to use about the same, judging from a
+    cursory perusing of github/maziarraissa/PINNs and github/rezaakb/pinns-torch.
+
+    Arguments:
+        q:      Integer number of stages.
+    """
+    d = np.loadtxt(Path(__file__).parent / f'../raissi-2019/Utilities/IRK_weights/Butcher_IRK{q}.txt').astype(np.float32)
+    A = d[:q**2].reshape((q, q))
+    b = d[q**2: q**2 + q]
+    c = d[q**2 + q:]
+
+    return A, b, c
     """
     Export numpy data to torch in every meaningful way, including sending it to the
     compute accelerator and casting it to the appropriate datatype.
