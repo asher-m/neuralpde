@@ -9,7 +9,7 @@ import netCDF4
 import numpy as np
 
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 
 
@@ -21,6 +21,22 @@ g02202_date_to_date = np.vectorize(_g02202_date_to_date_core)
 """
 Return the date as a datetime object.
 """
+
+
+def check_boundaries(indices: List[int] | Tuple[int], d: "SeaIceV4" | "SeaIceV5") -> None:
+    """
+    Verify that boundaries at each index in `indices` are the same (constant,) and fails if not.
+
+    Args:
+        indices:        List or tuple of indices to check, (you probably want these to be adjacent.)
+        d:              Sea ice data object.
+    """ 
+    indices = list(indices)   
+    assert np.all(d.flag_missing[indices[0]] == d.flag_missing[indices])
+    assert np.all(d.flag_land[indices[0]] == d.flag_land[indices])
+    assert np.all(d.flag_coast[indices[0]] == d.flag_coast[indices])
+    assert np.all(d.flag_lake[indices[0]] == d.flag_lake[indices])
+    assert np.all(d.flag_hole[indices[0]] == d.flag_hole[indices])
 
 
 class SeaIceV4():
