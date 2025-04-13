@@ -175,6 +175,8 @@ class Network(nn.Module):
         self.train()
         losses = list()
         for e in range(epochs):
+            print(f'Starting epoch {e}...', end='\r')
+
             optimizer.zero_grad()
 
             outs = self.forward(torch.stack((x, y, *u)))
@@ -253,6 +255,9 @@ class Network(nn.Module):
 
             losses.append(loss.item())
             if e % 10 == 0:
-                print(f'Epoch {e:5d}, loss {losses[-1]:10.2f}')
+                print(
+                    f'Epoch {e:5d}, loss {losses[-1]:10.2f}' +
+                    (f', relative improvement {100 * (1 - losses[-1] / losses[-10]):10.2f}%' if e > 0 else '')
+                )
 
         return losses
