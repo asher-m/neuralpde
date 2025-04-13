@@ -216,23 +216,23 @@ class Network(nn.Module):
                 u_rk_yy[i] = torch.autograd.grad(u_rk_y[i], y, ones_u_rk[-1], create_graph=True)[0]
 
             # evaluate pde
-            pde = kappa[None, ...] * (u_rk_xx + u_rk_yy) + (kappa_x[None, ...] * u_rk_x + kappa_y[None, ...] * u_rk_y) + \
-                    (v1[None, ...] * u_rk_x + v2[None, ...] * u_rk_y) + f
+            pde = kappa.unsqueeze(0) * (u_rk_xx + u_rk_yy) + (kappa_x.unsqueeze(0) * u_rk_x + kappa_y.unsqueeze(0) * u_rk_y) + \
+                    (v1.unsqueeze(0) * u_rk_x + v2.unsqueeze(0) * u_rk_y) + f
 
             # estimate solution with pde
             uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
             # uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
-            uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b[None, ...]), pde)
+            uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
 
             # compute loss with estimate and actual solution
-            loss_u_i = torch.sum(mask_other[None, ...] * (uhat_i - u_i[None, ...])**2)
-            loss_u_f = torch.sum(mask_other[None, ...] * (uhat_f - u_f[None, ...])**2)
+            loss_u_i = torch.sum(mask_other.unsqueeze(0) * (uhat_i - u_i.unsqueeze(0))**2)
+            loss_u_f = torch.sum(mask_other.unsqueeze(0) * (uhat_f - u_f.unsqueeze(0))**2)
 
             # compute other loss terms
-            loss_bc = torch.sum(mask_coast[None, ...] * (v1**2 + v2**2))
-            loss_kappa_reg = torch.sum(mask_other[None, ...] * (kappa_x**2 + kappa_y**2))
-            loss_v_reg = torch.sum(mask_other[None, ...] * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
-            loss_f_min = torch.sum(mask_other[None, ...] * (f**2))
+            loss_bc = torch.sum(mask_coast.unsqueeze(0) * (v1**2 + v2**2))
+            loss_kappa_reg = torch.sum(mask_other.unsqueeze(0) * (kappa_x**2 + kappa_y**2))
+            loss_v_reg = torch.sum(mask_other.unsqueeze(0) * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
+            loss_f_min = torch.sum(mask_other.unsqueeze(0) * (f**2))
 
             # compute final loss
             loss = torch.stack((loss_u_i, loss_u_f, loss_bc, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
