@@ -9,6 +9,8 @@ from typing import List, Tuple
 
 from torchviz import make_dot
 
+from .layer import LocallyConnected2d
+
 
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -92,20 +94,20 @@ class Network(nn.Module):
         self.rk_A, self.rk_b, self.rk_c = RK(self.q)
 
         self.channels_in = 2 + self.shape[0]  # 2 channels for spatial coords + shape[0] channels for input timesteps
-        self.channels_hidden = 2**(int(np.log2(self.channels_in)) + 1)
-        self.channels_out = 4 + q  # 4 channels for kappa, v (2d vector) and f + q channels for intermediate RK stages
+        self.channels_hidden = 2 * (4 + self.q)
+        self.channels_out = 4 + self.q  # 4 channels for kappa, v (2d vector) and f + q channels for intermediate RK stages
 
         self.layers = nn.Sequential(
-            nn.Conv2d(self.channels_in, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
+            LocallyConnected2d(self.channels_in, self.channels_hidden, self.shape[1:], kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
             nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
             nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
             nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU()
+            nn.ReLU(),
+            LocallyConnected2d(self.channels_hidden, self.channels_out, self.shape[1:], kernel_size=self.kernel, padding=self.padding),
         )
-        self.out = nn.Conv2d(self.channels_hidden, self.channels_out, kernel_size=self.kernel, padding=self.padding)
 
     def forward(self, data: torch.tensor):
         """
@@ -118,7 +120,7 @@ class Network(nn.Module):
 
         Returns a tensor on `DEVICE`.
         """
-        outs = self.out(self.layers(data))
+        outs = self.layers(data)
         return outs
 
     def predict(self, x: np.ndarray, y: np.ndarray, u: np.ndarray):
