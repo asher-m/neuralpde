@@ -184,6 +184,10 @@ class Network(nn.Module):
             # gradient insanity
             ones_kappa = torch.zeros_like(outs)
             ones_kappa[0] = 1
+            ones_v1 = torch.zeros_like(outs)
+            ones_v1[1] = 1
+            ones_v2 = torch.zeros_like(outs)
+            ones_v2[2] = 1
             ones_u_rk = list()
             for i in range(self.q):
                 ones_u_rk.append(torch.zeros_like(outs))
@@ -192,8 +196,8 @@ class Network(nn.Module):
 
             # compute gradients
             kappa_x, kappa_y = torch.autograd.grad(outs, (x, y), ones_kappa, create_graph=True)
-
-
+            v1_x, v1_y = torch.autograd.grad(outs, (x, y), ones_v1, create_graph=True)
+            v2_x, v2_y = torch.autograd.grad(outs, (x, y), ones_v2, create_graph=True)
             u_rk_x = torch.empty_like(outs[4:])
             u_rk_y = torch.empty_like(outs[4:])
             u_rk_xx = torch.empty_like(outs[4:])
@@ -210,7 +214,7 @@ class Network(nn.Module):
 
             # estimate solution with pde
             uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
-            # u_hat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
+            # uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
             uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b[None, ...]), pde)
 
             # compute loss with estimate and actual solution
@@ -218,10 +222,12 @@ class Network(nn.Module):
             loss_u_f = torch.sum((uhat_f - u_f[None, ...])**2)
 
             # compute other loss terms
+            loss_kappa_reg = torch.sum((kappa_x**2 + kappa_y**2))
+            loss_v_reg = torch.sum((v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
             loss_f_min = torch.sum((f**2))
 
             # compute final loss
-            loss = torch.stack((loss_u_i, loss_u_f, loss_f_min)) @ weights
+            loss = torch.stack((loss_u_i, loss_u_f, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
 
             # make graphs, if you want
             if do_graphs:
