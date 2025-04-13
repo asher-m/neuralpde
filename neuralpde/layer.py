@@ -65,20 +65,35 @@ class LocallyConnected2d(nn.Module):
     
     def forward(self, x: torch.tensor):
         """
+        Note: Currently, only 4-D input tensors (batched image-like tensors) are supported,
+        as per `nn.Unfold` and `nn.functional.unfold`.  This method will add a degenerate axis
+        at position 0 if it receives a tensor of ndim = 3, otherwise it will throw an error.
+
         Args:
             x (Tensor): Input tensor with shape (batch_size, in_channels, *self.in_spatial_shape)
              
         Returns:
             out (Tensor): Output tensor with shape (batch_size, out_channels, *self.out_spatial_shape)
         """
-        if x.ndim != 4:
-            raise NotImplementedError(
-                'Only 4-D input tensors (batched image-like tensors) are supported!\n'
-                'nn.Unfold and nn.functional.unfold only support 4d tensors.'
-            )
-        batch_size = x.size(0)
+        if x.ndim == 4:
+            batch_size = x.size(0)
 
-        blocks = torch.nn.functional.unfold(x, kernel_size=self.kernel_size, dilation=self.dilation, padding=self.padding, stride=self.stride)
-        out = torch.einsum('bil,iol->bol', blocks, self.weight) + self.bias.unsqueeze(0)
-        out = out.reshape((batch_size, self.out_channels, *self.out_spatial_size))
-        return out
+            blocks = torch.nn.functional.unfold(x, kernel_size=self.kernel_size, dilation=self.dilation, padding=self.padding, stride=self.stride)
+            out = torch.einsum('bil,iol->bol', blocks, self.weight) + self.bias.unsqueeze(0)
+            out = out.reshape((batch_size, self.out_channels, *self.out_spatial_size))
+            return out
+    
+        elif x.ndim == 3:
+            x = x.unsqueeze(0)
+            batch_size = 1
+
+            blocks = torch.nn.functional.unfold(x, kernel_size=self.kernel_size, dilation=self.dilation, padding=self.padding, stride=self.stride)
+            out = torch.einsum('bil,iol->bol', blocks, self.weight) + self.bias.unsqueeze(0)
+            out = out.reshape((batch_size, self.out_channels, *self.out_spatial_size))
+            return out.squeeze(0)
+
+        else:
+            raise NotImplementedError(
+                'Only 4-D (batched image-like tensors) or 3-D tensors (unbatched image-like tensors) are supported!\n'
+                'nn.Unfold and nn.functional.unfold only support 4-D tensors.'
+            )
