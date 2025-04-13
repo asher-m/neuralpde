@@ -141,7 +141,7 @@ class Network(nn.Module):
     def fit(self,
             x: np.ndarray, y: np.ndarray,
             u: np.ndarray,
-            loss_weights: np.ndarray,
+            weights: np.ndarray,
             epochs: int = 1000, lr: float = 1e-3,
             do_graphs: bool = False
         ):
@@ -154,13 +154,13 @@ class Network(nn.Module):
             y:              y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
                             specified at model initialization.
             u:              Solution data of each cell.  Must be of size `shape` specified at model initialization.
-            loss_weights:   Weights of each term in the loss.
+            weights:        Weights of each term in the loss. These are NOT weights of the model.
             epochs:         Number of epochs to run.
             lr:             Learning rate passed to Adam optimizer.
             do_graphs:      Make torchviz graphs of the computational graph.
         """
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
-        loss_weights = np2torch(loss_weights)
+        weights = np2torch(weights)
         optimizer = optim.Adam(self.parameters(), lr=lr)
 
         # get true solution values
@@ -218,10 +218,10 @@ class Network(nn.Module):
             loss_u_f = torch.sum((uhat_f - u_f[None, ...])**2)
 
             # compute other loss terms
-            loss_forcing = torch.sum(f**2)
+            loss_f_min = torch.sum((f**2))
 
             # compute final loss
-            loss = torch.stack((loss_u_i, loss_u_f, loss_forcing)) @ loss_weights
+            loss = torch.stack((loss_u_i, loss_u_f, loss_f_min)) @ weights
 
             # make graphs, if you want
             if do_graphs:
