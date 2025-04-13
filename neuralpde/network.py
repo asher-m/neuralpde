@@ -191,8 +191,8 @@ class Network(nn.Module):
             ones_u_rk.append(torch.ones_like(x).requires_grad_(True))  # for second derivatives
 
             # compute gradients
-            kappa_x = torch.autograd.grad(outs, x, ones_kappa, create_graph=True)[0]
-            kappa_y = torch.autograd.grad(outs, y, ones_kappa, create_graph=True)[0]
+            kappa_x, kappa_y = torch.autograd.grad(outs, (x, y), ones_kappa, create_graph=True)
+
 
             u_rk_x = torch.empty_like(outs[4:])
             u_rk_y = torch.empty_like(outs[4:])
