@@ -259,5 +259,7 @@ class Network(nn.Module):
                     f'Epoch {e:5d}, loss {losses[-1]:10.2f}' +
                     (f', relative improvement {100 * (1 - losses[-1] / losses[-10]):10.2f}%' if e > 0 else '')
                 )
+                if Path('stop-training').exists():
+                    break
 
         return losses
