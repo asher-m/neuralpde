@@ -142,6 +142,8 @@ class Network(nn.Module):
             x: np.ndarray, y: np.ndarray,
             u: np.ndarray,
             weights: np.ndarray,
+            mask_coast: np.ndarray,
+            mask_other: np.ndarray,
             epochs: int = 1000, lr: float = 1e-3,
             do_graphs: bool = False
         ):
@@ -161,6 +163,7 @@ class Network(nn.Module):
         """
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         weights = np2torch(weights)
+        mask_coast, mask_other = np2torch(mask_coast), np2torch(~mask_other)
         optimizer = optim.Adam(self.parameters(), lr=lr)
 
         # get true solution values
@@ -218,16 +221,17 @@ class Network(nn.Module):
             uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b[None, ...]), pde)
 
             # compute loss with estimate and actual solution
-            loss_u_i = torch.sum((uhat_i - u_i[None, ...])**2)
-            loss_u_f = torch.sum((uhat_f - u_f[None, ...])**2)
+            loss_u_i = torch.sum(mask_other[None, ...] * (uhat_i - u_i[None, ...])**2)
+            loss_u_f = torch.sum(mask_other[None, ...] * (uhat_f - u_f[None, ...])**2)
 
             # compute other loss terms
-            loss_kappa_reg = torch.sum((kappa_x**2 + kappa_y**2))
-            loss_v_reg = torch.sum((v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
-            loss_f_min = torch.sum((f**2))
+            loss_bc = torch.sum(mask_coast[None, ...] * (v1**2 + v2**2))
+            loss_kappa_reg = torch.sum(mask_other[None, ...] * (kappa_x**2 + kappa_y**2))
+            loss_v_reg = torch.sum(mask_other[None, ...] * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
+            loss_f_min = torch.sum(mask_other[None, ...] * (f**2))
 
             # compute final loss
-            loss = torch.stack((loss_u_i, loss_u_f, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
+            loss = torch.stack((loss_u_i, loss_u_f, loss_bc, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
 
             # make graphs, if you want
             if do_graphs:
