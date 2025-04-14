@@ -98,14 +98,16 @@ where each is an array of size $I \times J$.
 
 ## The Approach
 ### PINNs in the General Inverse Problem Context
-In the inverse problem context, PINNs are generally<sup>[ha, this section does what it says on the carton]</sup> used as a black-box for (I)BVP-type problems where we learn the unknown parameters $\lambda$ of the differential operator $D$ (possibly nonlinear!) allowing us to generate a solution for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)  Suppose we have the problem,
+For inverse problems, PINNs are generally constructed as solution operators for a PDE with unknown parameterization.  In particular, we learn *both* the solution and unknown parameters $\lambda$ of the (possibly nonlinear) differential operator $D$.  Then, by construction, the PINN is itself a solution to the PDE for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)
+
+Suppose we have the problem,
 ```math
 \begin{aligned}
-    u_t &= D[u; \lambda] & &\text{in } \Gamma \\
+    u_t - D[u; \lambda] &= 0 & &\text{in } \Gamma \\
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
 ```
-where some subset of spacetime $\Gamma \subset\mathbb{R}^n \times \mathbb{R}^+$, $u : \Gamma \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.  Simply, we want to find $\lambda$.
+where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of spacetime, the solution $u : \overline{\Gamma} \rightarrow \mathbb{R}$, parameterization $\lambda : \overline{\Gamma} \rightarrow \mathbb{R}^{N_\lambda}$ is some collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.
 
 #### Notational aside
 The general problem is, in fact, more general than the exact context in which we're applying the PINN framework.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ i \}_{i=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
@@ -141,30 +143,7 @@ where $\| \cdot \|_\Gamma$ is used to denote a suitable norm calculated over all
 
 Simply, then, we'll use the sum of these two measures of loss to train our PINN,
 ```math
-L = L_u + L_D
-```
-
-We hedge on a sufficiently capable ML suite to be able to autodifferentiate this loss function and associated compositions of integrators and derivatives.
-
-See the section on the discovery of PDE from data from [the Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks#Data-driven_discovery_of_partial_differential_equations), from which this notation is adapted.<sup>[[see note on terminology](#terminological-note)]</sup>
-
-Also [see this paper](https://doi.org/10.1016/j.jcp.2018.10.045), refered to by the PINN Wikipedia page.
-
-
-#### Terminological note
-As far as this author is concerned, the relevant physics encoded in a PDE is not determined by the coefficients but by the differential operators that define the PDE.  Accordingly, describing this type of inverse problem as the "discovery of PDE" seems categorically incorrect or a gross aggrandizement of one's own work.
-
-We're not discovering PDE here, we're just solving for the parameters that make the model work.  These two things are not the same.
-
-
-#### Note on multi-stage and multi-step methods
-Because $\kappa$, $v$, and $f$ are spatiotemporally variable, (respectively the $\tilde{\cdot}$ versions, as well,) it is unclear how (or wrong) to use a multi-stage scheme to calculate a latter timestep precisely because $\kappa$, $v$, and $f$ vary between timesteps, (at least assuming their inter-step variance is significant.  This can be disregarded if they can be assumed to have small inter-step variance.)
-
-Rather than a multi-stage scheme, multi-step schemes can be used to integrate the PDE, relying only on the good-enough approximations for $\kappa$, $v$ and $f$.
-
-
-#### Note on bootstrapping this method
-It's not (yet) clear how to bootstrap this method, in particular for the use of a multi-step integration scheme.  Darn.
+See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
 
 
 ### The Endgame
