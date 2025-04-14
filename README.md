@@ -95,23 +95,32 @@ or, considered over all space where we can omit subscripts corresponding to spat
 where each is an array of size $I \times J$.
 
 
+
 ## The Approach
-
-
 ### PINNs in the General Inverse Problem Context
-In the inverse problem context, PINNs are generally<sup>[ha, this section does what it says on the carton]</sup> used as a black-box for (I)BVP-type problems where we learn the parameters $\lambda$ of the differential operator $D$ allowing us to generate a solution for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)  Suppose we have the problem,
+In the inverse problem context, PINNs are generally<sup>[ha, this section does what it says on the carton]</sup> used as a black-box for (I)BVP-type problems where we learn the unknown parameters $\lambda$ of the differential operator $D$ (possibly nonlinear!) allowing us to generate a solution for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)  Suppose we have the problem,
 ```math
 \begin{aligned}
     u_t &= D[u; \lambda] & &\text{in } \Gamma \\
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
 ```
-where $u : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}^{N_c}$ 
+where some subset of spacetime $\Gamma \subset\mathbb{R}^n \times \mathbb{R}^+$, $u : \Gamma \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.  Simply, we want to find $\lambda$.
 
-Suppose we have a PINN $P$ such that, for any boundary data $g$, $P$ yields $\tilde{\lambda}$,
+#### Notational aside
+The general problem is, in fact, more general than the exact context in which we're applying the PINN framework.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ i \}_{i=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
 ```math
-    \tilde{\lambda} = P[g]
+\begin{aligned}
+    x_i
+    u_i                 & & \sim & & & \text{$u(t_i, x_i, y_i)}
+\end{aligned}
 ```
+and, generally for a subset $S^* \subset S$,
+```math
+    u_{S^*}
+```
+<!-- FIXME: make sure the indexing and enumeration here is compatible with the PDE layout like 10 lines up -->
+
 
 We then calculate an approximate solution using some suitable, accurate-enough integrator<sup>[[see note on integrators](#note-on-multi-stage-and-multi-step-methods)]</sup> $I$, like,
 ```math
