@@ -195,7 +195,7 @@ class Network(nn.Module):
             make_dot(uhat_i, params=dict(list(self.named_parameters()))).render('graph/uhat_i', format='pdf', cleanup=True)
             make_dot(uhat_f, params=dict(list(self.named_parameters()))).render('graph/uhat_f', format='pdf', cleanup=True)
 
-        return (uhat_i, uhat_f), (kappa, kappa_x, kappa_y), (v1, v1_x, v1_y), (v2, v2_x, v2_y), (f,)
+        return uhat_i, uhat_f, kappa, kappa_x, kappa_y, v1, v1_x, v1_y, v2, v2_x, v2_y, f
 
     def predict(
             self,
@@ -217,7 +217,7 @@ class Network(nn.Module):
         """
         self.eval()
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
-        return torch2np(self.forward(torch.stack((x, y, *u)).contiguous()))
+        return map(torch2np, self.forward(x, y, u))
 
     def fit(
             self,
@@ -260,7 +260,7 @@ class Network(nn.Module):
 
             optimizer.zero_grad()
 
-            (uhat_i, uhat_f), (kappa, kappa_x, kappa_y), (v1, v1_x, v1_y), (v2, v2_x, v2_y), (f,) = \
+            uhat_i, uhat_f, kappa, kappa_x, kappa_y, v1, v1_x, v1_y, v2, v2_x, v2_y, f = \
                 self.forward(x, y, u)
 
             # compute loss with estimate and actual solution
