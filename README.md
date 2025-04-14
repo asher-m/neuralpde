@@ -31,6 +31,51 @@ In general, we do not know how to solve this problem.<sup>[why not?]</sup>  In t
 But, like, it's probably fine.
 
 
+## Notation
+This is a particularly notation-heavy discussion, so let's establish some quantities.  This is going to seem exhaustive (and/or exhausting,) but the point here is to establish a pattern so we don't have to worry (too much) about the quantities considered.
+
+I establish two collections of parameters to aide in the following discussion of the notation and meaning of these paramters,
+$$
+\begin{aligned}
+    \lambda = ( \kappa, v, w, f )                                   & & \sim & & & \text{collection of true (underlying) parameters} \\
+    \hat{\lambda} = ( \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} )     & & \sim & & & \text{collection of estimated parameters.}
+\end{aligned}
+$$
+
+Then, I will interpret each of the following parameters according to,
+$$
+\begin{aligned}
+    t^n                                                             & & \sim & & & \text{the $n^{th}$ timestep, $n \in [1, \dots, N]$} \\
+    x_i                                                             & & \sim & & & \text{the $i^{th}$ $x$ coordinate (position), $i \in [1, \dots, I]$} \\
+    y_j                                                             & & \sim & & & \text{the $j^{th}$ $y$ coordinate (position), $j \in [1, \dots, J]$} \\
+    u^n_{ij}                                                        & & \sim & & & \text{$u(t^n, x_i, y_j)$, the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
+    \pi^n_{ij} \text{ such that } \pi \in \lambda                   & & \sim & & & \text{$\pi(t^n, x_i, y_j)$, the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
+    \hat{u}^n_{ij}                                                  & & \sim & & & \text{$\hat{u}(t^n, x_i, y_j)$, the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
+    \hat{\pi}^n_{ij} \text{ such that } \pi \in \hat{\lambda}       & & \sim & & & \text{$\hat{\pi}(t^n, x_i, y_j)$, the estimated value of $\pi$ at $(t^n, x_i, y_j)$.}
+    \end{aligned}
+$$
+When there is no risk of confusion, I will omit spatial indicies corresponding to the consideration of a parameter over all space, as,
+$$
+\begin{aligned}
+    u^n                                                             & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \pi^n \text{ such that } \pi \in \lambda                        & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{u}^n                                                       & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}            & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+\end{aligned}
+$$
+Hopefully, this naturally leads one to realize $\phi$ such that $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ ~ an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
+
+Finally, I will notate derivatives e.g., with respect to a parameter $s$, as,
+$$
+\begin{aligned}
+    (u^n_{ij})_s                                                        & & \sim & & & \text{$\partial_s u(t^n, x_i, y_j)$, the $s$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\pi^n_{ij})_s \text{ such that } \pi \in \lambda                   & & \sim & & & \text{$\partial_s \pi(t^n, x_i, y_j)$, the $s$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
+    (\hat{u}^n_{ij})_s                                                  & & \sim & & & \text{$\partial_s \hat{u}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\hat{\pi}^n_{ij})_s \text{ such that } \hat{\pi} \in \hat{\lambda}       & & \sim & & & \text{$\partial_s \hat{\pi}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$.}
+\end{aligned}
+$$
+
+
 ## The Approach
 
 
