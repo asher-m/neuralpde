@@ -146,7 +146,7 @@ We approximate $u(t, x)$ and $\lambda(t, x)$ with a *physics-informed neural net
 \left[ \hat{u}(t, x), \hat{\lambda}(t, x) \right] = P(t, x).
 ```
 
-Conditioned on the complexity of the network and not subject to additional assumptions, the PINN $P$ reproduces optimal approximations $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$ to $u(t, x)$ and $\lambda(t, x)$, respectively, by minimizing the loss,
+Conditioned on the complexity of the network and *not* subject to additional assumptions (e.g., about the PDE or solution,) the PINN $P$ reproduces optimal approximations $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$ to $u(t, x)$ and $\lambda(t, x)$, respectively, by minimizing the loss,
 ```math
 \begin{aligned}
     L &= \biggl\| \hat{u}^s - u^s \biggr\|_{s \in S} + \biggl\| \hat{u}_t^s -  D\left[\hat{u}^s; \hat{\lambda}^s\right] \biggr\|_{s \in S^\Gamma} \\
