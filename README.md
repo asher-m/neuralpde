@@ -3,13 +3,13 @@
 Research code for solving the forced advection-diffusion inverse problem for polar sea ice concentration.
 
 
-## Note on This Document
+#### Note on This Document
 While it is my hope that this summary of the methods and current work can always be complete, correct, and concise, it is the case that this page serves as a place to record ideas and thoughts on how to proceed, which, by their nature, can virtually never satisfies those desirable qualities.
 
 If you spot any egregious errors, please open a bug with the details or your questions or a pull request with the correction.
 
 
-### Notation
+#### Note on Notation
 I've attempted to maintain consistent notation throughout.  However, in various places certain notations are more or less useful, and I possess not the foresight to use such notation throughout or it was unnecessarily cumbersome to use everywhere.  In these places, I have used the best notation to lead to the least ambiguity about the topics discussed.
 
 
