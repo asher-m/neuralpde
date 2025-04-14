@@ -60,7 +60,7 @@ class LocallyConnected2d(nn.Module):
         self._block_size = self.in_channels * self.kernel_size**len(self.in_spatial_shape)
         """ Number of elements in each block """
         
-        self.weight = nn.Parameter(torch.randn(self._block_size, out_channels, self.L))
+        self.weight = nn.Parameter(torch.ones(self._block_size, out_channels, self.L) / self._block_size)
         self.bias = nn.Parameter(torch.randn(out_channels, self.L))
     
     def forward(self, x: torch.tensor):
