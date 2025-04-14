@@ -106,15 +106,7 @@ In the inverse problem context, PINNs are generally<sup>[ha, this section does w
     u &= g & &\text{on } \partial\Gamma
 \end{aligned}
 ```
-where $u : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$.
-
-Below, we will use $u$ to represent the experimentally-recorded data of the solution, $\tilde{u}$ to represent the approximate solution generated with parameters determined by the PINN, and $\lambda$ and $\tilde{\lambda}$ to represent the true- and PINN-determined parameters to the differntial operator $D$, respectively.
-
-We assume $u$ is an exact measurement of the exact solution at the discrete positions in spacetime at which $u$ is measured.  Then, in particular, $u$ is defined only on points like,
-```math
-    u(x_{ij}, t_n)
-```
-where $t_n$ is the time at timestep $n \in [1, 2, \dots, N]$ and $x_{ij}$ is the location at $(x_i, y_j)$ for $i \in [1, 2, \dots, M_x]$ and $j \in [1, 2, \dots, M_y]$ (note the overloaded notation on $x$.)  We will omit coordinates and indices when the risk of ambiguity does not exist.
+where $u : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}$, $\lambda$ is some (possibly space- and time-varying) collection of parameters, and the boundary condition $g : \mathbb{R}^n \times \mathbb{R}^+ \rightarrow \mathbb{R}^{N_c}$ 
 
 Suppose we have a PINN $P$ such that, for any boundary data $g$, $P$ yields $\tilde{\lambda}$,
 ```math
