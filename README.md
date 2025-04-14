@@ -18,9 +18,9 @@ We're trying to understand, quantify, and classify ice flows in Earth's polar re
 
 From observation, we believe the relevant physics to be governed by a forced advection-diffusion equation, like
 ```math
-    u_t = \nabla \cdot \left( \kappa \nabla u \right) + v \cdot \nabla u + f
+    u_t = \nabla \cdot \left( \kappa \nabla u \right) + \vec{v} \cdot \nabla u + f
 ```
-where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $v : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
+where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v, w)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
 
 In more words/to play with the terminology, the author posits that one could describe this problem as an "anisotropic forced advection-diffusion" problem.  Another fun way of describing this problem may be as an "inhomogeneous heterogeneous advection-diffusion" problem, (where "inhomogeneous" refers to the inhomogeneity, that is, the forcing, and "heterogeneous" refers to the spatiotemporally varying diffusion and advection.)
 
@@ -34,16 +34,25 @@ But, like, it's probably fine.
 ## Notation
 This is a particularly notation-heavy discussion, so let's establish some quantities.  This is going to seem exhaustive (and/or exhausting,) but the point here is to establish a pattern so we don't have to worry (too much) about the quantities considered.
 
-I establish two collections of parameters to aide in the following discussion of the notation and meaning of these paramters,
-$$
+I define two collections of parameters to aide in the following discussion of the notation and meaning of these paramters,
+```math
 \begin{aligned}
-    \lambda = ( \kappa, v, w, f )                                   & & \sim & & & \text{collection of true (underlying) parameters} \\
-    \hat{\lambda} = ( \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} )     & & \sim & & & \text{collection of estimated parameters.}
+    \lambda &= ( \kappa, v, w, f )                                  & \sim & & & \text{collection of true (underlying) parameters} \\
+    \hat{\lambda} &= ( \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} )    & \sim & & & \text{collection of estimated parameters.}
 \end{aligned}
-$$
+```
+where
+```math
+\begin{aligned}
+    \kappa, \hat{\kappa}                                            & & \sim & & & \text{diffusivity (resp. true and estimated)} \\
+    v, \hat{v}                                                      & & \sim & & & \text{first component of velocity (resp. true and estimated)} \\
+    w, \hat{w}                                                      & & \sim & & & \text{second component of velocity (resp. true and estimated)} \\
+    f, \hat{f}                                                      & & \sim & & & \text{forcing (resp. true and estimated.)} \\
+\end{aligned}
+```
 
 Then, I will interpret each of the following parameters according to,
-$$
+```math
 \begin{aligned}
     t^n                                                             & & \sim & & & \text{the $n^{th}$ timestep, $n \in [1, \dots, N]$} \\
     x_i                                                             & & \sim & & & \text{the $i^{th}$ $x$ coordinate (position), $i \in [1, \dots, I]$} \\
@@ -53,27 +62,37 @@ $$
     \hat{u}^n_{ij}                                                  & & \sim & & & \text{$\hat{u}(t^n, x_i, y_j)$, the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
     \hat{\pi}^n_{ij} \text{ such that } \pi \in \hat{\lambda}       & & \sim & & & \text{$\hat{\pi}(t^n, x_i, y_j)$, the estimated value of $\pi$ at $(t^n, x_i, y_j)$.}
     \end{aligned}
-$$
-When there is no risk of confusion, I will omit spatial indicies corresponding to the consideration of a parameter over all space, as,
-$$
+```
+When there is no risk of confusion, I will omit spatial indices corresponding to the consideration of a parameter over all space, as,
+```math
 \begin{aligned}
     u^n                                                             & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
     \pi^n \text{ such that } \pi \in \lambda                        & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
     \hat{u}^n                                                       & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}            & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+    \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}      & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
 \end{aligned}
-$$
-Hopefully, this naturally leads one to realize $\phi$ such that $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ ~ an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
+```
+Hopefully, this naturally leads one to realize $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ is an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
 
-Finally, I will notate derivatives e.g., with respect to a parameter $s$, as,
-$$
+Finally, I will notate derivatives, e.g., with respect to a parameter $s$, as,
+```math
 \begin{aligned}
-    (u^n_{ij})_s                                                        & & \sim & & & \text{$\partial_s u(t^n, x_i, y_j)$, the $s$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\pi^n_{ij})_s \text{ such that } \pi \in \lambda                   & & \sim & & & \text{$\partial_s \pi(t^n, x_i, y_j)$, the $s$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
-    (\hat{u}^n_{ij})_s                                                  & & \sim & & & \text{$\partial_s \hat{u}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\hat{\pi}^n_{ij})_s \text{ such that } \hat{\pi} \in \hat{\lambda}       & & \sim & & & \text{$\partial_s \hat{\pi}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$.}
+    (u^n_{ij})_s                                                                & & \sim & & & \text{$\partial_s u(t^n, x_i, y_j)$, the $s$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\pi^n_{ij})_s \text{ such that } \pi \in \lambda                           & & \sim & & & \text{$\partial_s \pi(t^n, x_i, y_j)$, the $s$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
+    (\hat{u}^n_{ij})_s                                                          & & \sim & & & \text{$\partial_s \hat{u}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\hat{\pi}^n_{ij})_s \text{ such that } \hat{\pi} \in \hat{\lambda}         & & \sim & & & \text{$\partial_s \hat{\pi}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$,}
 \end{aligned}
-$$
+```
+or, considered over all space where we can omit subscripts corresponding to spatial index,
+```math
+\begin{aligned}
+    u^n_s                                                           & & \sim & & & \text{$\partial_s u(t^n)$, an array of size $I \times J$ of the $s$-partial of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \pi^n_s \text{ such that } \pi \in \lambda                      & & \sim & & & \text{$\partial_s \pi(t^n)$, an array of size $I \times J$ of the $s$-partial of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{u}^n_s                                                     & & \sim & & & \text{$\partial_s u(t^n)$, an array of size $I \times J$ of the $s$-partial of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{\pi}^n_s \text{ such that } \hat{\pi} \in \hat{\lambda}    & & \sim & & & \text{$\partial_s \pi(t^n)$, an array of size $I \times J$ of the $s$-partial of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+\end{aligned}
+```
+where each is an array of size $I \times J$.
 
 
 ## The Approach
