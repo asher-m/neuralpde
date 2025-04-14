@@ -1,5 +1,4 @@
 # NeuralPDE for Sea Ice
-
 Research code for solving the forced advection-diffusion inverse problem for polar sea ice concentration.
 
 
@@ -14,7 +13,7 @@ I've attempted to maintain consistent notation throughout.  However, in various 
 
 
 ## The Problem
-We're trying to understand, quantify, and classify ice flows in Earth's polar regions.  NOAA and NASA publish large sea ice concentration datasets dating back nearly 40 years.
+We're trying to understand ice flows in Earth's polar regions.  NOAA and NASA publish large sea ice concentration datasets dating back nearly 50 years.
 
 From observation, we believe the relevant physics to be governed by a forced advection-diffusion equation, like
 ```math
@@ -22,13 +21,7 @@ From observation, we believe the relevant physics to be governed by a forced adv
 ```
 where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v, w)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
 
-In more words/to play with the terminology, the author posits that one could describe this problem as an "anisotropic forced advection-diffusion" problem.  Another fun way of describing this problem may be as an "inhomogeneous heterogeneous advection-diffusion" problem, (where "inhomogeneous" refers to the inhomogeneity, that is, the forcing, and "heterogeneous" refers to the spatiotemporally varying diffusion and advection.)
-
-Note that $u$ is known (at least known on some grid in space-time.)  Accordingly, this is an inverse problem to solve for $\kappa$, $v$, and $f$.
-
-In general, we do not know how to solve this problem.<sup>[why not?]</sup>  In this context, it is unclear if this problem is well-posed (does there exist a unique solution for each set of inputs, at least subject to reasonable assumptions?) or even well-defined (is it possible to solve this problem given the input data?)
-
-But, like, it's probably fine.
+The problem may be called an *anisotropic forced advection-diffusion problem.*
 
 
 ## Notation
