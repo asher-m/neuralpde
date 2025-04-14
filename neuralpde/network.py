@@ -98,7 +98,7 @@ class Network(nn.Module):
         self.channels_out = 4 + self.q  # 4 channels for kappa, v (2d vector) and f + q channels for intermediate RK stages
 
         self.layers = nn.Sequential(
-            LocallyConnected2d(self.channels_in, self.channels_hidden, self.shape[1:], kernel_size=self.kernel, padding=self.padding),
+            nn.Conv2d(self.channels_in, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
             nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
@@ -106,7 +106,7 @@ class Network(nn.Module):
             nn.ReLU(),
             nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
             nn.ReLU(),
-            LocallyConnected2d(self.channels_hidden, self.channels_out, self.shape[1:], kernel_size=self.kernel, padding=self.padding),
+            nn.Conv2d(self.channels_hidden, self.channels_out, kernel_size=self.kernel, padding=self.padding),
         )
 
     def forward(self, data: torch.tensor):
