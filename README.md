@@ -10,7 +10,7 @@ If you spot any egregious errors, please open a bug with the details or your que
 
 
 #### Note on Notation
-I've attempted to maintain consistent notation throughout.  However, in various places certain notations are more or less useful, and I possess not the foresight to use such notation throughout or it was unnecessarily cumbersome to use everywhere.  In these places, I have used the best notation to lead to the least ambiguity about the topics discussed.
+I've attempted to maintain consistent notation throughout.  However, in various places certain notations are more or less useful, and I possess not the foresight to use such notation throughout or it was unnecessarily cumbersome to use everywhere.  In these places, I have used the notation I thought to minimize ambiguity about the topics discussed.
 
 
 ## The Problem
