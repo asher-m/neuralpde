@@ -72,7 +72,7 @@ When there is no risk of confusion, I will omit spatial indices corresponding to
     \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}      & & \sim & & & \hat{\pi}(t^n) \text{, an array of size } I \times J \text{ of the estimated value of } \pi \text{ at every } (x_i, y_j) \text{ at } t^n.
 \end{aligned}
 ```
-Hopefully, this naturally leads one to realize $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ is an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
+Hopefully, this naturally leads one to realize $\phi \in (u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f})$ is an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
 
 Finally, I will notate derivatives, e.g., with respect to a parameter $\chi$, as,
 ```math
@@ -116,7 +116,7 @@ The general problem is, in fact, more general than the exact context to which we
     t^s             & & \sim & & & \text{the time corresponding to the } s^{th} \text{ sample} \\
     x^s             & & \sim & & & \text{the location corresponding to the } s^{th} \text{ sample like } ( x^s_n )_{n=1}^N =: x^s \in \mathbb{R}^N \\
     u^s             & & \sim & & & u(t^s, x^s) \text{, the true (experimental) value of } u \text{ at } (t^s, x^s) \\
-    \lambda^s       & & \sim & & & \lambda(t^s, x^s) \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ like } (\lambda_n)_{n=1}^{N_\lambda} =: \lambda^s \in \mathbb{\R}^{N_\lambda},
+    \lambda^s       & & \sim & & & \lambda(t^s, x^s) \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ like } (\lambda_n)_{n=1}^{N_\lambda} =: \lambda^s \in \mathbb{R}^{N_\lambda},
 \end{aligned}
 ```
 and, generally for a subset $S^* \subset S$,
