@@ -110,24 +110,34 @@ Suppose we have the problem,
 where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of spacetime, the solution $u : \overline{\Gamma} \rightarrow \mathbb{R}$, parameterization $\lambda : \overline{\Gamma} \rightarrow \mathbb{R}^{N_\lambda}$ is some collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.
 
 #### Notational aside
-The general problem is, in fact, more general than the exact context in which we're applying the PINN framework.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ i \}_{i=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
+The general problem is, in fact, more general than the exact context to which we're applying the PINN framework for sea ice.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have (implicitly) described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
 ```math
 \begin{aligned}
-    x_i
-    u_i                 & & \sim & & & \text{$u(t_i, x_i, y_i)}
+    t^s             & & \sim & & & \text{the time corresponding to the $s^{th}$ sample} \\
+    x^s       & & \sim & & & \text{the location corresponding to the $s^{th}$ sample like $( x^s_n )_{n=1}^N =: x^s \in \overline{\Gamma}$} \\
+    u^s             & & \sim & & & \text{$u(t^s, x^s)$, the true (experimental) value of $u$ at $(t^s, x^s)$} \\
+    \lambda^s       & & \sim & & & \text{$\lambda(t^s, x^s)$, the true (underlying) value of $\lambda$ at $(t^s, x^s)$ like $\lambda^s_n := (\lambda_n)_{n=1}^{N_\lambda}$,}
 \end{aligned}
 ```
 and, generally for a subset $S^* \subset S$,
 ```math
-    u_{S^*}
+\begin{aligned}
+    t^{S^*}         & & \sim & & & \text{$\{ t^s \}_{s \in S^*}$, the time corresponding to the $s^{th}$ sample  at every $s \in S^*$} \\
+    x^{S^*}   & & \sim & & & \text{$\{ x^s \}_{s \in S^*}$, the location corresponding to the $s^{th}$ sample at every $s \in S^*$} \\
+    u^{S^*}         & & \sim & & & \text{$\{u(t^s, x^s)\}_{s \in S^*}$, the true (experimental) value of $u$ at $(t^s, x^s)$ at every $s \in S^*$} \\
+    \lambda^{S^*}   & & \sim & & & \text{$\{\lambda(t^s, x^s)\}_{s \in S^*}$, the true (underlying) value of $\lambda$ at $(t^s, x^s)$ at every $s \in S^*$.}
+\end{aligned}
 ```
-<!-- FIXME: make sure the indexing and enumeration here is compatible with the PDE layout like 10 lines up -->
+As in the former discussion of the application of PINNs to the sea ice problem, for any quantity $\phi \in (u, \lambda)$, I will represent its estimate as $\hat{\phi}$.  Similarly, for any quantity $\phi \in (u, \lambda, \hat{u}, \hat{\lambda})$, I will notate its derivative with respect to a parameter $\chi$ as $\phi_\chi =: \partial_\chi \phi$. 
 
-
-We then calculate an approximate solution using some suitable, accurate-enough integrator<sup>[[see note on integrators](#note-on-multi-stage-and-multi-step-methods)]</sup> $I$, like,
+There are at least two important subsets of $S$,
 ```math
-\tilde{u} = I[g; \tilde{\lambda}]
+\begin{aligned}
+    S^\Gamma                & & \sim & & & \text{the set of sample points in $\Gamma$} \\
+    S^{\partial\Gamma}      & & \sim & & & \text{the set of sample points on $\partial\Gamma$.}
+\end{aligned}
 ```
+We now return to the consideration of PINNs for the general inverse PDE problem.
 
 Note that, in the preceding discussion of these (as-of-yet imaginary) machines that produce $\tilde{\lambda}$ and $\tilde{u}$, the boundary data $g$ can be replaced with any known state of $u$, effectively just translating the problem in time.  We use $g$ to clarify notation, but, generally speaking, we will use a known state of $u$, say $u(t_n)$, for $g$, from which we attempt to calculate $\tilde{u}(t_{n + 1})$.
 
