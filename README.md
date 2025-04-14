@@ -44,32 +44,32 @@ I define two collections of parameters to aide in the following discussion of th
 where
 ```math
 \begin{aligned}
-    \kappa, \hat{\kappa}                                            & & \sim & & & \text{diffusivity (resp. true and estimated)} \\
-    v, \hat{v}                                                      & & \sim & & & \text{first component of velocity (resp. true and estimated)} \\
-    w, \hat{w}                                                      & & \sim & & & \text{second component of velocity (resp. true and estimated)} \\
-    f, \hat{f}                                                      & & \sim & & & \text{forcing (resp. true and estimated.)} \\
+    \kappa, & \; \hat{\kappa}                                          & \sim & & & \text{diffusivity (resp. true and estimated)} \\
+    v, & \; \hat{v}                                                    & \sim & & & \text{first component of velocity (resp. true and estimated)} \\
+    w, & \; \hat{w}                                                    & \sim & & & \text{second component of velocity (resp. true and estimated)} \\
+    f, & \; \hat{f}                                                    & \sim & & & \text{forcing (resp. true and estimated.)} \\
 \end{aligned}
 ```
 
 Then, I will interpret each of the following parameters according to,
 ```math
 \begin{aligned}
-    t^n                                                             & & \sim & & & \text{the $n^{th}$ timestep, $n \in [1, \dots, N]$} \\
-    x_i                                                             & & \sim & & & \text{the $i^{th}$ $x$ coordinate (position), $i \in [1, \dots, I]$} \\
-    y_j                                                             & & \sim & & & \text{the $j^{th}$ $y$ coordinate (position), $j \in [1, \dots, J]$} \\
-    u^n_{ij}                                                        & & \sim & & & \text{$u(t^n, x_i, y_j)$, the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
-    \pi^n_{ij} \text{ such that } \pi \in \lambda                   & & \sim & & & \text{$\pi(t^n, x_i, y_j)$, the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
-    \hat{u}^n_{ij}                                                  & & \sim & & & \text{$\hat{u}(t^n, x_i, y_j)$, the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
-    \hat{\pi}^n_{ij} \text{ such that } \pi \in \hat{\lambda}       & & \sim & & & \text{$\hat{\pi}(t^n, x_i, y_j)$, the estimated value of $\pi$ at $(t^n, x_i, y_j)$.}
-    \end{aligned}
+    t^n                                                             & & \sim & & & n^{th} \text{ timestep, } n \in [1, \dots, N] \\
+    x_i                                                             & & \sim & & & i^{th} \text{ } x \text{ coordinate (position), } i \in [1, \dots, I] \\
+    y_j                                                             & & \sim & & & j^{th} \text{ } y \text{ coordinate (position), } j \in [1, \dots, J] \\
+    u^n_{ij}                                                        & & \sim & & & u(t^n, x_i, y_j) \text{, the true (experimental) value of } u \text{ at } (t^n, x_i, y_j) \\
+    \pi^n_{ij} \text{ such that } \pi \in \lambda                   & & \sim & & & \pi(t^n, x_i, y_j) \text{, the true (underlying) value of } \pi \text{ at } (t^n, x_i, y_j) \\
+    \hat{u}^n_{ij}                                                  & & \sim & & & \hat{u}(t^n, x_i, y_j) \text{, the estimated value of } u \text{ at } (t^n, x_i, y_j) \\
+    \hat{\pi}^n_{ij} \text{ such that } \pi \in \hat{\lambda}       & & \sim & & & \hat{\pi}(t^n, x_i, y_j) \text{, the estimated value of } \pi \text{ at } (t^n, x_i, y_j).
+\end{aligned}
 ```
 When there is no risk of confusion, I will omit spatial indices corresponding to the consideration of a parameter over all space, as,
 ```math
 \begin{aligned}
-    u^n                                                             & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \pi^n \text{ such that } \pi \in \lambda                        & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{u}^n                                                       & & \sim & & & \text{$u(t^n)$, an array of size $I \times J$ of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}      & & \sim & & & \text{$\pi(t^n)$, an array of size $I \times J$ of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+    u^n                                                             & & \sim & & & u(t^n) \text{, an array of size } I \times J \text{ of the true (experimental) value of } u \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \pi^n \text{ such that } \pi \in \lambda                        & & \sim & & & \pi(t^n) \text{, an array of size } I \times J \text{ of the true (underlying) value of } \pi \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \hat{u}^n                                                       & & \sim & & & \hat{u}(t^n) \text{, an array of size } I \times J \text{ of the estimated value of } u \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \hat{\pi}^n \text{ such that } \hat{\pi} \in \hat{\lambda}      & & \sim & & & \hat{\pi}(t^n) \text{, an array of size } I \times J \text{ of the estimated value of } \pi \text{ at every } (x_i, y_j) \text{ at } t^n.
 \end{aligned}
 ```
 Hopefully, this naturally leads one to realize $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ is an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
@@ -77,19 +77,19 @@ Hopefully, this naturally leads one to realize $\phi \in \{ u, \kappa, v, w, f, 
 Finally, I will notate derivatives, e.g., with respect to a parameter $\chi$, as,
 ```math
 \begin{aligned}
-    (u^n_{ij})_\chi                                                                & & \sim & & & \text{$\partial_\chi u(t^n, x_i, y_j)$, the $\chi$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\pi^n_{ij})_\chi \text{ such that } \pi \in \lambda                           & & \sim & & & \text{$\partial_\chi \pi(t^n, x_i, y_j)$, the $\chi$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
-    (\hat{u}^n_{ij})_\chi                                                          & & \sim & & & \text{$\partial_\chi \hat{u}(t^n, x_i, y_j)$, the $\chi$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\hat{\pi}^n_{ij})_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}         & & \sim & & & \text{$\partial_\chi \hat{\pi}(t^n, x_i, y_j)$, the $\chi$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$,}
+    (u^n_{ij})_\chi                                                                & & \sim & & & \partial_\chi u(t^n, x_i, y_j) \text{, the } \chi \text{-partial of the true (experimental) value of } u \text{ at } (t^n, x_i, y_j) \\
+    (\pi^n_{ij})_\chi \text{ such that } \pi \in \lambda                           & & \sim & & & \partial_\chi \pi(t^n, x_i, y_j) \text{, the } \chi \text{-partial of the true (underlying) value of } \pi \text{ at } (t^n, x_i, y_j) \\
+    (\hat{u}^n_{ij})_\chi                                                          & & \sim & & & \partial_\chi \hat{u}(t^n, x_i, y_j) \text{, the } \chi \text{-partial of the estimated value of } u \text{ at } (t^n, x_i, y_j) \\
+    (\hat{\pi}^n_{ij})_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}         & & \sim & & & \partial_\chi \hat{\pi}(t^n, x_i, y_j) \text{, the } \chi \text{-partial of the estimated value of } \pi \text{ at } (t^n, x_i, y_j),
 \end{aligned}
 ```
 or, considered over all space where we can omit subscripts corresponding to spatial index,
 ```math
 \begin{aligned}
-    u^n_\chi                                                           & & \sim & & & \text{$\partial_\chi u(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \pi^n_\chi \text{ such that } \pi \in \lambda                      & & \sim & & & \text{$\partial_\chi \pi(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{u}^n_\chi                                                     & & \sim & & & \text{$\partial_\chi u(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{\pi}^n_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}    & & \sim & & & \text{$\partial_\chi \pi(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+    u^n_\chi                                                           & & \sim & & & \partial_\chi u(t^n) \text{, an array of size } I \times J \text{ of the } \chi \text{-partial of the true (experimental) value of } u \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \pi^n_\chi \text{ such that } \pi \in \lambda                      & & \sim & & & \partial_\chi \pi(t^n) \text{, an array of size } I \times J \text{ of the } \chi \text{-partial of the true (underlying) value of } \pi \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \hat{u}^n_\chi                                                     & & \sim & & & \partial_\chi u(t^n) \text{, an array of size } I \times J \text{ of the } \chi \text{-partial of the estimated value of } u \text{ at every } (x_i, y_j) \text{ at } t^n \\
+    \hat{\pi}^n_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}    & & \sim & & & \partial_\chi \pi(t^n) \text{, an array of size } I \times J \text{ of the } \chi \text{-partial of the estimated value of } \pi \text{ at every } (x_i, y_j) \text{ at } t^n.
 \end{aligned}
 ```
 where each is an array of size $I \times J$.
@@ -113,28 +113,28 @@ where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of space
 The general problem is, in fact, more general than the exact context to which we're applying the PINN framework for sea ice.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have (implicitly) described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
 ```math
 \begin{aligned}
-    t^s             & & \sim & & & \text{the time corresponding to the $s^{th}$ sample} \\
-    x^s       & & \sim & & & \text{the location corresponding to the $s^{th}$ sample like $( x^s_n )_{n=1}^N =: x^s \in \overline{\Gamma}$} \\
-    u^s             & & \sim & & & \text{$u(t^s, x^s)$, the true (experimental) value of $u$ at $(t^s, x^s)$} \\
-    \lambda^s       & & \sim & & & \text{$\lambda(t^s, x^s)$, the true (underlying) value of $\lambda$ at $(t^s, x^s)$ like $\lambda^s_n := (\lambda_n)_{n=1}^{N_\lambda}$,}
+    t^s             & & \sim & & & \text{the time corresponding to the } s^{th} \text{ sample} \\
+    x^s             & & \sim & & & \text{the location corresponding to the } s^{th} \text{ sample like } ( x^s_n )_{n=1}^N =: x^s \in \mathbb{R}^N \\
+    u^s             & & \sim & & & u(t^s, x^s) \text{, the true (experimental) value of } u \text{ at } (t^s, x^s) \\
+    \lambda^s       & & \sim & & & \lambda(t^s, x^s) \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ like } (\lambda_n)_{n=1}^{N_\lambda} =: \lambda^s \in \mathbb{\R}^{N_\lambda},
 \end{aligned}
 ```
 and, generally for a subset $S^* \subset S$,
 ```math
 \begin{aligned}
-    t^{S^*}         & & \sim & & & \text{$\{ t^s \}_{s \in S^*}$, the time corresponding to the $s^{th}$ sample  at every $s \in S^*$} \\
-    x^{S^*}   & & \sim & & & \text{$\{ x^s \}_{s \in S^*}$, the location corresponding to the $s^{th}$ sample at every $s \in S^*$} \\
-    u^{S^*}         & & \sim & & & \text{$\{u(t^s, x^s)\}_{s \in S^*}$, the true (experimental) value of $u$ at $(t^s, x^s)$ at every $s \in S^*$} \\
-    \lambda^{S^*}   & & \sim & & & \text{$\{\lambda(t^s, x^s)\}_{s \in S^*}$, the true (underlying) value of $\lambda$ at $(t^s, x^s)$ at every $s \in S^*$.}
+    t^{S^*}         & & \sim & & & \{ t^s \}_{s \in S^*} \text{, the time corresponding to the } s^{th} \text{ sample at every } s \in S^* \\
+    x^{S^*}         & & \sim & & & \{ x^s \}_{s \in S^*} \text{, the location corresponding to the } s^{th} \text{ sample at every } s \in S^* \\
+    u^{S^*}         & & \sim & & & \{u(t^s, x^s)\}_{s \in S^*} \text{, the true (experimental) value of } u \text{ at } (t^s, x^s) \text{ at every } s \in S^* \\
+    \lambda^{S^*}   & & \sim & & & \{\lambda(t^s, x^s)\}_{s \in S^*} \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ at every } s \in S^*.
 \end{aligned}
 ```
-As in the former discussion of the application of PINNs to the sea ice problem, for any quantity $\phi \in (u, \lambda)$, I will represent its estimate as $\hat{\phi}$.  Similarly, for any quantity $\phi \in (u, \lambda, \hat{u}, \hat{\lambda})$, I will notate its derivative with respect to a parameter $\chi$ as $\phi_\chi =: \partial_\chi \phi$. 
+As in the former discussion of the application of PINNs to the sea ice problem, for any quantity $\phi \in (u, \lambda)$, I will represent its estimate as $\hat{\phi}$.  Similarly, for any quantity $\phi \in (u, \lambda, \hat{u}, \hat{\lambda})$, I will notate its derivative with respect to a parameter $\chi$ as $\phi_\chi := \partial_\chi \phi$. 
 
 There are at least two important subsets of $S$,
 ```math
 \begin{aligned}
-    S^\Gamma                & & \sim & & & \text{the set of sample points in $\Gamma$} \\
-    S^{\partial\Gamma}      & & \sim & & & \text{the set of sample points on $\partial\Gamma$.}
+    S^\Gamma                & & \sim & & & \text{the set of sample points in } \Gamma \\
+    S^{\partial\Gamma}      & & \sim & & & \text{the set of sample points on } \partial\Gamma.
 \end{aligned}
 ```
 We now return to the consideration of PINNs for the general inverse PDE problem.
