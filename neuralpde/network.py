@@ -70,7 +70,12 @@ def torch2np(d):
 
 
 class Network(nn.Module):
-    def __init__(self, q: int, shape: Tuple[int], kernel: int = 5) -> None:
+    def __init__(
+            self,
+            q: int,
+            shape: Tuple[int],
+            kernel: int
+        ) -> None:
         """
         Initialize the PINN.
 
@@ -127,7 +132,13 @@ class Network(nn.Module):
         ones_ddu_rk = torch.ones(self.shape[1:])
         self.register_buffer('ones_ddu_rk', ones_ddu_rk)
 
-    def forward(self, x: torch.tensor, y: torch.tensor, u: torch.tensor, do_graphs: bool = False):
+    def forward(
+            self,
+            x: torch.tensor,
+            y: torch.tensor,
+            u: torch.tensor,
+            do_graphs: bool = False
+        ):
         """
         Push data through the network for training.
 
@@ -208,14 +219,16 @@ class Network(nn.Module):
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         return torch2np(self.forward(torch.stack((x, y, *u)).contiguous()))
 
-    def fit(self,
-            x: np.ndarray, y: np.ndarray,
+    def fit(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
             u: np.ndarray,
             weights: np.ndarray,
             mask_coast: np.ndarray,
             mask_other: np.ndarray,
-            epochs: int = 1000, lr: float = 1e-3,
-            do_graphs: bool = False
+            epochs: int = 1000,
+            lr: float = 1e-3,
         ):
         """
         Train the PINN.
