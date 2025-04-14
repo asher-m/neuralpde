@@ -74,22 +74,22 @@ When there is no risk of confusion, I will omit spatial indices corresponding to
 ```
 Hopefully, this naturally leads one to realize $\phi \in \{ u, \kappa, v, w, f, \hat{u}, \hat{\kappa}, \hat{v}, \hat{w}, \hat{f} \}$ is an array of size $N \times I \times J$ of the (resp: true or estimated) value of $\phi$ at every $(t^n, x_i, y_j)$.
 
-Finally, I will notate derivatives, e.g., with respect to a parameter $s$, as,
+Finally, I will notate derivatives, e.g., with respect to a parameter $\chi$, as,
 ```math
 \begin{aligned}
-    (u^n_{ij})_s                                                                & & \sim & & & \text{$\partial_s u(t^n, x_i, y_j)$, the $s$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\pi^n_{ij})_s \text{ such that } \pi \in \lambda                           & & \sim & & & \text{$\partial_s \pi(t^n, x_i, y_j)$, the $s$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
-    (\hat{u}^n_{ij})_s                                                          & & \sim & & & \text{$\partial_s \hat{u}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
-    (\hat{\pi}^n_{ij})_s \text{ such that } \hat{\pi} \in \hat{\lambda}         & & \sim & & & \text{$\partial_s \hat{\pi}(t^n, x_i, y_j)$, the $s$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$,}
+    (u^n_{ij})_\chi                                                                & & \sim & & & \text{$\partial_\chi u(t^n, x_i, y_j)$, the $\chi$-partial of the true (experimental) value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\pi^n_{ij})_\chi \text{ such that } \pi \in \lambda                           & & \sim & & & \text{$\partial_\chi \pi(t^n, x_i, y_j)$, the $\chi$-partial of the true (underlying) value of $\pi$ at $(t^n, x_i, y_j)$} \\
+    (\hat{u}^n_{ij})_\chi                                                          & & \sim & & & \text{$\partial_\chi \hat{u}(t^n, x_i, y_j)$, the $\chi$-partial of the estimated value of $u$ at $(t^n, x_i, y_j)$} \\
+    (\hat{\pi}^n_{ij})_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}         & & \sim & & & \text{$\partial_\chi \hat{\pi}(t^n, x_i, y_j)$, the $\chi$-partial of the estimated value of $\pi$ at $(t^n, x_i, y_j)$,}
 \end{aligned}
 ```
 or, considered over all space where we can omit subscripts corresponding to spatial index,
 ```math
 \begin{aligned}
-    u^n_s                                                           & & \sim & & & \text{$\partial_s u(t^n)$, an array of size $I \times J$ of the $s$-partial of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \pi^n_s \text{ such that } \pi \in \lambda                      & & \sim & & & \text{$\partial_s \pi(t^n)$, an array of size $I \times J$ of the $s$-partial of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{u}^n_s                                                     & & \sim & & & \text{$\partial_s u(t^n)$, an array of size $I \times J$ of the $s$-partial of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
-    \hat{\pi}^n_s \text{ such that } \hat{\pi} \in \hat{\lambda}    & & \sim & & & \text{$\partial_s \pi(t^n)$, an array of size $I \times J$ of the $s$-partial of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
+    u^n_\chi                                                           & & \sim & & & \text{$\partial_\chi u(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the true (experimental) value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \pi^n_\chi \text{ such that } \pi \in \lambda                      & & \sim & & & \text{$\partial_\chi \pi(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the true (underlying) value of $\pi$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{u}^n_\chi                                                     & & \sim & & & \text{$\partial_\chi u(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the estimated value of $u$ at every $(x_i, y_j)$ at $t^n$} \\
+    \hat{\pi}^n_\chi \text{ such that } \hat{\pi} \in \hat{\lambda}    & & \sim & & & \text{$\partial_\chi \pi(t^n)$, an array of size $I \times J$ of the $\chi$-partial of the estimated value of $\pi$ at every $(x_i, y_j)$ at $t^n$.}
 \end{aligned}
 ```
 where each is an array of size $I \times J$.
