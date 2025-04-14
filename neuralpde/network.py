@@ -109,21 +109,89 @@ class Network(nn.Module):
             nn.Conv2d(self.channels_hidden, self.channels_out, kernel_size=self.kernel, padding=self.padding),
         )
 
-    def forward(self, data: torch.tensor):
+        # gradient insanity
+        ones_dkappa = torch.zeros((self.channels_out,) + self.shape[1:])
+        ones_dkappa[0] = 1
+        self.register_buffer('ones_dkappa', ones_dkappa)
+        ones_dv1 = torch.zeros((self.channels_out,) + self.shape[1:])
+        ones_dv1[1] = 1
+        self.register_buffer('ones_dv1', ones_dv1)
+        ones_dv2 = torch.zeros((self.channels_out,) + self.shape[1:])
+        ones_dv2[2] = 1
+        self.register_buffer('ones_dv2', ones_dv2)
+        ones_du_rk = list()
+        for i in range(self.q):
+            ones_du_rk.append(torch.zeros((self.channels_out,) + self.shape[1:]))
+            ones_du_rk[i][4 + i] = 1
+        self.register_buffer('ones_du_rk', torch.stack(ones_du_rk).contiguous())
+        ones_ddu_rk = torch.ones(self.shape[1:])
+        self.register_buffer('ones_ddu_rk', ones_ddu_rk)
+
+    def forward(self, x: torch.tensor, y: torch.tensor, u: torch.tensor, do_graphs: bool = False):
         """
         Push data through the network for training.
 
         Arguments:
-            data:       Stacked and exported (i.e., moved to GPU if desired) data, where `data[0:2]` are spatial
-                        coordinate arrays each of size `shape[1:]`, and `data[2:]` is a collection of stacked solution
-                        data.
+            x:              x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                            specified at model initialization.
+            y:              y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
+                            specified at model initialization.
+            u:              Solution data of each cell.  Must be of size `shape` specified at model initialization.
 
-        Returns a tensor on `DEVICE`.
+        Returns a tuple of tensors on `DEVICE`.
         """
-        outs = self.layers(data)
-        return outs
+        outs = self.layers(torch.stack((x, y, *u)).contiguous())
 
-    def predict(self, x: np.ndarray, y: np.ndarray, u: np.ndarray):
+        # break out nn params
+        kappa = outs[0]
+        v1 = outs[1]
+        v2 = outs[2]
+        f = outs[3]
+        u_rk = outs[4:]
+
+        # compute gradients
+        kappa_x, kappa_y = torch.autograd.grad(outs, (x, y), self.ones_dkappa, create_graph=True)
+        v1_x, v1_y = torch.autograd.grad(outs, (x, y), self.ones_dv1, create_graph=True)
+        v2_x, v2_y = torch.autograd.grad(outs, (x, y), self.ones_dv2, create_graph=True)
+        u_rk_x = torch.empty_like(outs[4:])  # can I optimize creating all of these arrays?
+        u_rk_y = torch.empty_like(outs[4:])
+        u_rk_xx = torch.empty_like(outs[4:])
+        u_rk_yy = torch.empty_like(outs[4:])
+        for i in range(self.q):
+            u_rk_x[i] = torch.autograd.grad(outs, x, self.ones_du_rk[i], create_graph=True)[0]
+            u_rk_y[i] = torch.autograd.grad(outs, y, self.ones_du_rk[i], create_graph=True)[0]
+            u_rk_xx[i] = torch.autograd.grad(u_rk_x[i], x, self.ones_ddu_rk, create_graph=True)[0]
+            u_rk_yy[i] = torch.autograd.grad(u_rk_y[i], y, self.ones_ddu_rk, create_graph=True)[0]
+
+        # evaluate pde
+        pde = kappa.unsqueeze(0) * (u_rk_xx + u_rk_yy) + (kappa_x.unsqueeze(0) * u_rk_x + kappa_y.unsqueeze(0) * u_rk_y) + \
+            (v1.unsqueeze(0) * u_rk_x + v2.unsqueeze(0) * u_rk_y) + f
+
+        # estimate solution with pde
+        uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
+        # uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
+        uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
+
+        # make graphs, if you want
+        if do_graphs:
+            make_dot(kappa, params=dict(list(self.named_parameters()))).render('graph/kappa', format='pdf', cleanup=True)
+            make_dot(v1, params=dict(list(self.named_parameters()))).render('graph/v1', format='pdf', cleanup=True)
+            make_dot(f, params=dict(list(self.named_parameters()))).render('graph/f', format='pdf', cleanup=True)
+            make_dot(u_rk, params=dict(list(self.named_parameters()))).render('graph/u_rk', format='pdf', cleanup=True)
+            make_dot(kappa_x, params=dict(list(self.named_parameters()))).render('graph/kappa_x', format='pdf', cleanup=True)
+            make_dot(u_rk_x, params=dict(list(self.named_parameters()))).render('graph/u_rk_x', format='pdf', cleanup=True)
+            make_dot(u_rk_xx, params=dict(list(self.named_parameters()))).render('graph/u_rk_xx', format='pdf', cleanup=True)
+            make_dot(uhat_i, params=dict(list(self.named_parameters()))).render('graph/uhat_i', format='pdf', cleanup=True)
+            make_dot(uhat_f, params=dict(list(self.named_parameters()))).render('graph/uhat_f', format='pdf', cleanup=True)
+
+        return (uhat_i, uhat_f), (kappa, kappa_x, kappa_y), (v1, v1_x, v1_y), (v2, v2_x, v2_y), (f,)
+
+    def predict(
+            self,
+            x: np.ndarray,
+            y: np.ndarray,
+            u: np.ndarray
+        ):
         """
         Push data through the network for evaluation.
 
@@ -138,7 +206,7 @@ class Network(nn.Module):
         """
         self.eval()
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
-        return torch2np(self.forward(torch.stack((x, y, *u))))
+        return torch2np(self.forward(torch.stack((x, y, *u)).contiguous()))
 
     def fit(self,
             x: np.ndarray, y: np.ndarray,
@@ -179,50 +247,8 @@ class Network(nn.Module):
 
             optimizer.zero_grad()
 
-            outs = self.forward(torch.stack((x, y, *u)))
-
-            # break out nn params
-            kappa = outs[0]
-            v1 = outs[1]
-            v2 = outs[2]
-            f = outs[3]
-            u_rk = outs[4:]
-
-            # gradient insanity
-            ones_kappa = torch.zeros_like(outs)
-            ones_kappa[0] = 1
-            ones_v1 = torch.zeros_like(outs)
-            ones_v1[1] = 1
-            ones_v2 = torch.zeros_like(outs)
-            ones_v2[2] = 1
-            ones_u_rk = list()
-            for i in range(self.q):
-                ones_u_rk.append(torch.zeros_like(outs))
-                ones_u_rk[i][4 + i] = 1
-            ones_u_rk.append(torch.ones_like(x).requires_grad_(True))  # for second derivatives
-
-            # compute gradients
-            kappa_x, kappa_y = torch.autograd.grad(outs, (x, y), ones_kappa, create_graph=True)
-            v1_x, v1_y = torch.autograd.grad(outs, (x, y), ones_v1, create_graph=True)
-            v2_x, v2_y = torch.autograd.grad(outs, (x, y), ones_v2, create_graph=True)
-            u_rk_x = torch.empty_like(outs[4:])
-            u_rk_y = torch.empty_like(outs[4:])
-            u_rk_xx = torch.empty_like(outs[4:])
-            u_rk_yy = torch.empty_like(outs[4:])
-            for i in range(self.q):
-                u_rk_x[i] = torch.autograd.grad(outs, x, ones_u_rk[i], create_graph=True)[0]
-                u_rk_y[i] = torch.autograd.grad(outs, y, ones_u_rk[i], create_graph=True)[0]
-                u_rk_xx[i] = torch.autograd.grad(u_rk_x[i], x, ones_u_rk[-1], create_graph=True)[0]
-                u_rk_yy[i] = torch.autograd.grad(u_rk_y[i], y, ones_u_rk[-1], create_graph=True)[0]
-
-            # evaluate pde
-            pde = kappa.unsqueeze(0) * (u_rk_xx + u_rk_yy) + (kappa_x.unsqueeze(0) * u_rk_x + kappa_y.unsqueeze(0) * u_rk_y) + \
-                    (v1.unsqueeze(0) * u_rk_x + v2.unsqueeze(0) * u_rk_y) + f
-
-            # estimate solution with pde
-            uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
-            # uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
-            uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
+            (uhat_i, uhat_f), (kappa, kappa_x, kappa_y), (v1, v1_x, v1_y), (v2, v2_x, v2_y), (f,) = \
+                self.forward(x, y, u)
 
             # compute loss with estimate and actual solution
             loss_u_i = torch.sum(mask_other.unsqueeze(0) * (uhat_i - u_i.unsqueeze(0))**2)
@@ -236,19 +262,6 @@ class Network(nn.Module):
 
             # compute final loss
             loss = torch.stack((loss_u_i, loss_u_f, loss_bc, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
-
-            # make graphs, if you want
-            if do_graphs:
-                make_dot(kappa, params=dict(list(self.named_parameters()))).render('graph/kappa', format='pdf', cleanup=True)
-                make_dot(v1, params=dict(list(self.named_parameters()))).render('graph/v1', format='pdf', cleanup=True)
-                make_dot(f, params=dict(list(self.named_parameters()))).render('graph/f', format='pdf', cleanup=True)
-                make_dot(u_rk, params=dict(list(self.named_parameters()))).render('graph/u_rk', format='pdf', cleanup=True)
-                make_dot(kappa_x, params=dict(list(self.named_parameters()))).render('graph/kappa_x', format='pdf', cleanup=True)
-                make_dot(u_rk_x, params=dict(list(self.named_parameters()))).render('graph/u_rk_x', format='pdf', cleanup=True)
-                make_dot(u_rk_xx, params=dict(list(self.named_parameters()))).render('graph/u_rk_xx', format='pdf', cleanup=True)
-                make_dot(uhat_i, params=dict(list(self.named_parameters()))).render('graph/uhat_i', format='pdf', cleanup=True)
-                make_dot(uhat_f, params=dict(list(self.named_parameters()))).render('graph/uhat_f', format='pdf', cleanup=True)
-                break  # break, because we're not making graphs every time
 
             loss.backward()
             optimizer.step()
