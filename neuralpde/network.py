@@ -256,7 +256,8 @@ class Network(nn.Module):
         u_f = u[len(u) // 2 + 1]
 
         # touch training file (if this disappears, we stop)
-        _training = Path('training').touch()
+        _training = Path('training')
+        _training.touch()
 
         self.train()
         losses = list()
