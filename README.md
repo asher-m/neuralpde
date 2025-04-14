@@ -139,20 +139,26 @@ There are at least two important subsets of $S$,
 ```
 We now return to the consideration of PINNs for the general inverse PDE problem.
 
-Note that, in the preceding discussion of these (as-of-yet imaginary) machines that produce $\tilde{\lambda}$ and $\tilde{u}$, the boundary data $g$ can be replaced with any known state of $u$, effectively just translating the problem in time.  We use $g$ to clarify notation, but, generally speaking, we will use a known state of $u$, say $u(t_n)$, for $g$, from which we attempt to calculate $\tilde{u}(t_{n + 1})$.
+Summarily: we have $N_S$ sampled points $(t^S, x^S, u^S)$, and we want to find approximations for $u(t, x)$ and $\lambda(t, x)$.
 
-Finally, then, there are two basic considerations: as observers (scientists, etc...) we care about the solution error.  Note, however, that as *better* observers (*better* scientists, etc...), we ought to also care about error in the governing physics encoded in the PDE itself, that is a misbalance in the left- and right-hand sides of the PDE.  This naturally leads us to consider the two residuals,
+We approximate $u(t, x)$ and $\lambda(t, x)$ with a *physics-informed neural network* $P$ as
 ```math
-    L_u = \| u - \tilde{u} \|_\Gamma
+\left[ \hat{u}(t, x), \hat{\lambda}(t, x) \right] = P(t, x).
 ```
-and
-```math
-    L_D = \| u_t - D[u; \tilde{\lambda}] \|_\Gamma
-```
-where $\| \cdot \|_\Gamma$ is used to denote a suitable norm calculated over all (known) points on the interior of $\Gamma$, $L_u$ represents the solution residual (or loss) and $L_D$ represents the differential residual (or loss.)  We calculate the necessary partials of $\tilde{u}$ similarly to calcualting $\tilde{u}$ itself using a good-enough finite-difference scheme.
 
-Simply, then, we'll use the sum of these two measures of loss to train our PINN,
+Conditioned on the complexity of the network and not subject to additional assumptions, the PINN $P$ reproduces optimal approximations $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$ to $u(t, x)$ and $\lambda(t, x)$, respectively, by minimizing the loss,
 ```math
+\begin{aligned}
+    L &= \biggl\| \hat{u}^s - u^s \biggr\|_{s \in S} + \biggl\| \hat{u}_t^s -  D\left[\hat{u}^s; \hat{\lambda}^s\right] \biggr\|_{s \in S^\Gamma} \\
+    &= \biggl\| \hat{u}^{S} - u^{S} \biggr\| + \biggl\| \hat{u}_t^{S^\Gamma} - D\left[\hat{u}^{S^\Gamma}; \hat{\lambda}^{S^\Gamma}\right] \biggr\|
+\end{aligned}
+```
+where $\| \cdot \|$ is some suitable notion of norm.
+
+A **crucial realization** is that derivatives $\hat{u}_t$ and combinations of derivatives $D[\hat{u}; \hat{\lambda}]$ can be computed by applying the chain rule for compositions of functions by autodifferentiation of the PINN.
+
+The loss $L$ is minimized in $K$ iterations on a subset of the data $S^k \subseteq S$ using a gradient descent algorithm, (e.g., BFGS and its variants, [stochastic gradient descent](https://www.cs.toronto.edu/%7Ehinton/absps/momentum.pdf), [Adam](https://arxiv.org/abs/1412.6980), etc.)  For each iteration $k$, $S^k$ is (*or can be*) randomly selected from $S$ depending on computational limitations (e.g., if the dataset is too large to fit in a computer's memory or if the complexity of the PINN is such that memory requirements for its weights do not allow simultaneous training on multiple data.)  For small problems, $S^k$ can be chosen such that $S^k = S$ for every $k$.
+
 See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
 
 
