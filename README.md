@@ -155,6 +155,63 @@ The loss $L$ is minimized in $K$ iterations on a subset of the data $S^k \subset
 See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
 
 
+### PINNs for the Scalar-Parameterized Inverse Problem
+Raissi et al. 2019, in addition to other interesting discussion, describes how to apply the PINN framework to problems with data collected at discrete time steps.  In particular, this can be thought of as a specialization of the preceeding discussion on PINNs in the general inverse problem context.
+
+Suppose we have some collection of samples at a time $t^n$ and time $t^{n+1}$.   In the notation of the preceding section, we have $N_S = N^{n}_S + N^{n+1}_S$ samples corresponding to index set $S = S^n \cup S^{n+1}$ such that,
+```math
+\begin{aligned}
+    t^{S^n} &= t^n \\
+    t^{S^{n+1}} &= t^{n+1}.
+\end{aligned}
+```
+Note that, of course, this requires $S^n \cap S^{n+1} = \varnothing$.
+
+Accordingly, we have coordinates and measurements, where
+```math
+\begin{aligned}
+    x^{S^n} & & &\text{and} & x^{S^{n+1}} & & &\text{in space } \mathbb{R}^N, & \text{and} \\
+    u^{S^n} & & &\text{and} & u^{S^{n+1}} & & &\text{are scalars.}
+\end{aligned}
+```
+
+Recall the general form of a Runge-Kutta numerical integration scheme of $q$ stages: momentarily, assume that we have knowledge of $u$ and $\lambda$ at each of the $q$ Runge-Kutta stages: $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda^{n + c_1}, \lambda^{n + c_2}, \dots, \lambda^{n + c_q}$.  Note that, generally speaking, these values are hidden.  An RK scheme can be expressed for a PDE $u_t = D[u; \lambda]$ integrating with time step $\Delta t$,
+```math
+\begin{aligned}
+    u^{n+1} &= u^n + \Delta t \sum_{i=1}^q b_i k_i \\
+    \text{where} \quad k_i &= D\left[ u^n + \Delta t \sum_{j=1}^q a_{ij} k_j; \lambda^{n + c_j} \right].
+\end{aligned}
+```
+This is equivalent to,
+```math
+\begin{aligned}
+    u^{n+c_i} &= u^n + \Delta t \sum_{j=1}^q a_{ij} D\left[ u^{n + c_j}; \lambda^{n + c_j} \right] \\
+    u^{n+1} &= u^n + \Delta t \sum_{j=1}^q b_j D\left[ u^{n + c_j}; \lambda^{n + c_j} \right].
+\end{aligned}
+```
+
+We construct a PINN $P$ to predict the values $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda^{n + c_1}, \lambda^{n + c_2}, \dots, \lambda^{n + c_q}$.  Raissi demonstrates how to rearrage the previous equations to estimate the solution $u$ at the endpoints of the interval from the predicted intermediate solution $u^{n + c_j}$ and parameters $\lambda^{n + c_j}$ as,
+```math
+\begin{aligned}
+    \hat{u}^n_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q a_{ij} D\left[ \hat{u}^{n + c_j}; \hat{\lambda}^{n + c_j} \right] \\
+    \hat{u}^{n+1}_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q (a_{ij} - b_j) D\left[ \hat{u}^{n + c_j}; \hat{\lambda}^{n + c_j} \right]
+\end{aligned}
+```
+for $i = 1, \dots, q$.
+
+Accordingly, we have $2q$ equations, $q$ of which predict the solution at time $t^n$ with known solution $u^n$, and $q$ of which predict the solution at time $t^{n+1}$ with known solution $u^{n+1}$.
+
+Precisely, we construct a neural network, yielding quantities $\hat{u}^{n + c_1}, \hat{u}^{n + c_2}, \dots, \hat{u}^{n + c_q}$ and $\hat{\lambda}^{n + c_1}, \hat{\lambda}^{n + c_2}, \dots, \hat{\lambda}^{n + c_q}$, on top of which we compose the preceding equations to estimate $\hat{u}^n_i$ and $\hat{u}^{n+1}_i$ for $i = 1, \dots, q$.
+
+<!-- need to point out that Raissi (as do we) assume temporally constant parameters -->
+
+
+### PINNs for the Vector Field-Parameterized Forced Advection-Diffusion Inverse Problem
+This section can be thought of a generalization of the ideas in the previous section, while adhering to the desire to analytically compute an accurate solution by means of a sufficiently accurate Runge-Kutta integration scheme.  Herin I discuss how I've implemented the ideas from Raissi et al. 2019 to the problem and data of forced advection-diffusion of sea ice.
+
+<!-- probably move notation down here if I redefine it everywhere, anyway -->
+
+
 ### The Endgame
 Right now, what we want really isn't too complex:
 <p align="center">
