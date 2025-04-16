@@ -181,9 +181,8 @@ class Network(nn.Module):
             (v1.unsqueeze(0) * u_rk_x + v2.unsqueeze(0) * u_rk_y) + f
 
         # estimate solution with pde
-        uhat_i = u_rk + dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in eq. (22) in Raissi 2019
-        # uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)  # as in Raissi's PINN codebase
-        uhat_f = u_rk + dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
+        uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)
+        uhat_f = u_rk - dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
 
         # make graphs, if you want
         if do_graphs:
