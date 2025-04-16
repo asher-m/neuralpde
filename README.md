@@ -154,9 +154,8 @@ The loss $L$ is minimized in $K$ iterations on a subset of the data $S^k \subset
 
 See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
 
-
-### PINNs for the Scalar-Parameterized Inverse Problem
-Raissi et al. 2019, in addition to other interesting discussion, describes how to apply the PINN framework to problems with data collected at discrete time steps.  In particular, this can be thought of as a specialization of the preceeding discussion on PINNs in the general inverse problem context.
+### PINNs for the Constant Scalar-Parameterized Inverse Problem
+Raissi et al. 2019, in addition to other interesting discussion, describes how to apply the PINN framework to problems with data collected at sparse time steps.  In particular, this can be thought of as a specialization of the preceeding discussion on PINNs in the general inverse problem context.  The following discussion covers section 4.2 of Raissi et al. 2019.
 
 Suppose we have some collection of samples at a time $t^n$ and time $t^{n+1}$.   In the notation of the preceding section, we have $N_S = N^{n}_S + N^{n+1}_S$ samples corresponding to index set $S = S^n \cup S^{n+1}$ such that,
 ```math
@@ -174,36 +173,84 @@ Accordingly, we have coordinates and measurements, where
     u^{S^n} & & &\text{and} & u^{S^{n+1}} & & &\text{are scalars.}
 \end{aligned}
 ```
+Let some PDE in consideration,
+```math
+u_t = D[u; \lambda].
+```
 
-Recall the general form of a Runge-Kutta numerical integration scheme of $q$ stages: momentarily, assume that we have knowledge of $u$ and $\lambda$ at each of the $q$ Runge-Kutta stages: $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda^{n + c_1}, \lambda^{n + c_2}, \dots, \lambda^{n + c_q}$.  Note that, generally speaking, these values are hidden.  An RK scheme can be expressed for a PDE $u_t = D[u; \lambda]$ integrating with time step $\Delta t$,
+Raissi develops this framework assuming spatiotemporally constant differential parameterization $\lambda$.  While the discussion develops assuming spatially-constant $\lambda$ for conveience, assuming temporally-constant $\lambda$ is generally necessary to guarantee uniqueness of $\lambda$, (though it is unclear if this is both necessary and sufficient.  See [this section](#uniqueness-of) for an example of why this is the case and when non-unique $\lambda$ can be avoided.)  However, [the general framework above](#pinns-in-the-general-inverse-problem-context) theoretically (though its analysis has not yet been completed) permits extraction of temporally- and even spatio-temporally varying parameterization $\lambda$.
+
+Recall the general form of a Runge-Kutta numerical integration scheme: momentarily, assume that we have knowledge of $u$ at each of the $q$ Runge-Kutta stages, $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$, and some value of $\lambda$.  Note that, generally speaking, these values are hidden.  An RK scheme of $q$ stages for the PDE above integrating with time step $\Delta t$ can be expressed as,
 ```math
 \begin{aligned}
     u^{n+1} &= u^n + \Delta t \sum_{i=1}^q b_i k_i \\
-    \text{where} \quad k_i &= D\left[ u^n + \Delta t \sum_{j=1}^q a_{ij} k_j; \lambda^{n + c_j} \right].
+    \text{where} \quad k_i &= D\left[ u^n + \Delta t \sum_{j=1}^q a_{ij} k_j; \lambda \right].
 \end{aligned}
 ```
 This is equivalent to,
 ```math
 \begin{aligned}
-    u^{n+c_i} &= u^n + \Delta t \sum_{j=1}^q a_{ij} D\left[ u^{n + c_j}; \lambda^{n + c_j} \right] \\
-    u^{n+1} &= u^n + \Delta t \sum_{j=1}^q b_j D\left[ u^{n + c_j}; \lambda^{n + c_j} \right].
+    u^{n+c_i} &= u^n + \Delta t \sum_{j=1}^q a_{ij} D\left[ u^{n + c_j}; \lambda \right] \\
+    u^{n+1} &= u^n + \Delta t \sum_{j=1}^q b_j D\left[ u^{n + c_j}; \lambda \right].
 \end{aligned}
 ```
 
-We construct a PINN $P$ to predict the values $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda^{n + c_1}, \lambda^{n + c_2}, \dots, \lambda^{n + c_q}$.  Raissi demonstrates how to rearrage the previous equations to estimate the solution $u$ at the endpoints of the interval from the predicted intermediate solution $u^{n + c_j}$ and parameters $\lambda^{n + c_j}$ as,
+We construct a PINN $P$ to predict the values $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda$.  Raissi demonstrates how to rearrange the previous equations to estimate the solution $u$ at the endpoints of the interval from the predicted intermediate solutions $u^{n + c_j}$ and parameters $\lambda$ as below.  The first equation below is the first equation above reordered, and the second equation below can be found by subtracting the equations above.
 ```math
 \begin{aligned}
-    \hat{u}^n_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q a_{ij} D\left[ \hat{u}^{n + c_j}; \hat{\lambda}^{n + c_j} \right] \\
-    \hat{u}^{n+1}_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q (a_{ij} - b_j) D\left[ \hat{u}^{n + c_j}; \hat{\lambda}^{n + c_j} \right]
+    \hat{u}^n_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q a_{ij} D\left[ \hat{u}^{n + c_j}; \hat{\lambda} \right] \\
+    \hat{u}^{n+1}_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q (a_{ij} - b_j) D\left[ \hat{u}^{n + c_j}; \hat{\lambda} \right]
 \end{aligned}
 ```
-for $i = 1, \dots, q$.
+for $i = 1, \dots, q$.  Note that Raissi formulates the PDE such that $D[u; \lambda]$ has the opposite sign, which results in an opposite sign associated with the $\Delta t \sum (\cdots)$ term.  
 
-Accordingly, we have $2q$ equations, $q$ of which predict the solution at time $t^n$ with known solution $u^n$, and $q$ of which predict the solution at time $t^{n+1}$ with known solution $u^{n+1}$.
+Altogether, we have $2q$ equations, $q$ of which predict the solution at time $t^n$ with known solution $u^n$, and $q$ of which predict the solution at time $t^{n+1}$ with known solution $u^{n+1}$.
 
 Precisely, we construct a neural network, yielding quantities $\hat{u}^{n + c_1}, \hat{u}^{n + c_2}, \dots, \hat{u}^{n + c_q}$ and $\hat{\lambda}^{n + c_1}, \hat{\lambda}^{n + c_2}, \dots, \hat{\lambda}^{n + c_q}$, on top of which we compose the preceding equations to estimate $\hat{u}^n_i$ and $\hat{u}^{n+1}_i$ for $i = 1, \dots, q$.
 
 <!-- need to point out that Raissi (as do we) assume temporally constant parameters -->
+
+#### Uniqueness of $\lambda$
+As a simple example of why it is necessary to assume $\lambda$ is constant on the interval $(t^n, t^{n+1})$ is to consider the advection equation,
+```math
+\begin{aligned}
+    u_t + \lambda u_x &= 0  & &\text{in } \mathbb{R}^+ \times \mathbb{R} \\
+    u(0, x) &= u_0(x)       & &\text{on } \{ t = 0 \} \times \mathbb{R}.
+\end{aligned}
+```
+Recall the solution to this problem is given by,
+```math
+u(t, x) = u_0(x - \lambda t).
+```
+
+Assume $\lambda$ is not constant on the interval $(t^n, t^{n+1})$.  Then there exist infinite time-varying parameterization $\lambda$ of the PDE.  In particular, the following two parameterizations produce data recorded at the endpoints $t^n$ and $t^{n+1}$,
+```math
+\begin{aligned}
+    \lambda(t) &= \lambda_0 & &\text{or} & \lambda(t) &= \begin{cases} 3 \lambda_0 & t^n < t < \frac{2}{3} \Delta t \\ -3 \lambda_0 & t\phantom{^n} \geq \frac{2}{3} \Delta t \end{cases}
+\end{aligned}
+```
+for $\Delta t = t^{n+1} - t^n$.
+
+Exactly, this produces,
+```math
+\begin{aligned}
+    u(t, x) &= u_0(x - \lambda_0 t^n) & &\text{and} & u(t, x) &= u_0(x - \lambda_0 t^n)
+\end{aligned}
+```
+at endpoint $t^n$, and
+```math
+\begin{aligned}
+    u(t^{n+1}, x) &= u_0(x - \lambda_0 t^{n+1}) & &\text{and} & u(t^{n+1}, x) &= u_0(x - \lambda_0 t^n - 3 \lambda_0 \frac{2}{3}\Delta t + 3 \lambda_0 \frac{1}{3}\Delta t) \\
+                                                                     & & & & &= u_0(x - \lambda_0 t^n - \lambda_0 \Delta t) \\
+                                                                     & & & & &= u_0(x - \lambda_0 t^{n + 1})
+
+\end{aligned}
+```
+at endpoint $t^{n+1}$.
+
+Clearly, then, allowing temporally varying $\lambda$ will not produce a unique $\lambda$ for every PDE.
+
+There are some assumptions that can mitigate this problem.  For example, if we assume $\lambda$ is minimally temporally varying we again recover uniqueness.  This is, in fact, a relatively weak assumption related to how the data are sampled and is, generally, reasonable.
 
 
 ### PINNs for the Vector Field-Parameterized Forced Advection-Diffusion Inverse Problem
