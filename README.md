@@ -88,7 +88,6 @@ or, considered over all space where we can omit subscripts corresponding to spat
 where each is an array of size $I \times J$.
 
 
-
 ## The Approach
 ### PINNs in the General Inverse Problem Context
 For inverse problems, PINNs are generally constructed as solution operators for a PDE with unknown parameterization.  In particular, we learn *both* the solution and unknown parameters $\lambda$ of the (possibly nonlinear) differential operator $D$.  Then, by construction, the PINN is itself a solution to the PDE for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)
@@ -101,6 +100,7 @@ Suppose we have the problem,
 \end{aligned}
 ```
 where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of spacetime, the solution $u : \overline{\Gamma} \rightarrow \mathbb{R}$, parameterization $\lambda : \overline{\Gamma} \rightarrow \mathbb{R}^{N_\lambda}$ is some collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.
+
 
 #### Notational aside
 The general problem is, in fact, more general than the exact context to which we're applying the PINN framework for sea ice.  Specifically, PINNs do not require dense sampling of the solution $u$ or rectangularly discretized data, as I have (implicitly) described in the [Notation](#notation) section.  For the remainder of this section, we will adopt the following more general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
@@ -153,6 +153,7 @@ A **crucial realization** is that derivatives $\hat{u}_t$ and combinations of de
 The loss $L$ is minimized in $K$ iterations on a subset of the data $S^k \subseteq S$ using a gradient descent algorithm, (e.g., BFGS and its variants, [stochastic gradient descent](https://www.cs.toronto.edu/%7Ehinton/absps/momentum.pdf), [Adam](https://arxiv.org/abs/1412.6980), etc.)  For each iteration $k$, $S^k$ is (*or can be*) randomly selected from $S$ depending on computational limitations (e.g., if the dataset is too large to fit in a computer's memory or if the complexity of the PINN is such that memory requirements for its weights do not allow simultaneous training on multiple data.)  For small problems, $S^k$ can be chosen such that $S^k = S$ for every $k$.
 
 See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
+
 
 ### PINNs for the Constant Scalar-Parameterized Inverse Problem
 Raissi et al. 2019, in addition to other interesting discussion, describes how to apply the PINN framework to problems with data collected at sparse time steps.  In particular, this can be thought of as a specialization of the preceeding discussion on PINNs in the general inverse problem context.  The following discussion covers section 4.2 of Raissi et al. 2019.
@@ -208,7 +209,6 @@ Altogether, we have $2q$ equations, $q$ of which predict the solution at time $t
 
 Precisely, we construct a neural network, yielding quantities $\hat{u}^{n + c_1}, \hat{u}^{n + c_2}, \dots, \hat{u}^{n + c_q}$ and $\hat{\lambda}^{n + c_1}, \hat{\lambda}^{n + c_2}, \dots, \hat{\lambda}^{n + c_q}$, on top of which we compose the preceding equations to estimate $\hat{u}^n_i$ and $\hat{u}^{n+1}_i$ for $i = 1, \dots, q$.
 
-<!-- need to point out that Raissi (as do we) assume temporally constant parameters -->
 
 #### Uniqueness of $\lambda$
 As a simple example of why it is necessary to assume $\lambda$ is constant on the interval $(t^n, t^{n+1})$ is to consider the advection equation,
@@ -226,7 +226,7 @@ u(t, x) = u_0(x - \lambda t).
 Assume $\lambda$ is not constant on the interval $(t^n, t^{n+1})$.  Then there exist infinite time-varying parameterization $\lambda$ of the PDE.  In particular, the following two parameterizations produce data recorded at the endpoints $t^n$ and $t^{n+1}$,
 ```math
 \begin{aligned}
-    \lambda(t) &= \lambda_0 & &\text{or} & \lambda(t) &= \begin{cases} 3 \lambda_0 & t^n < t < \frac{2}{3} \Delta t \\ -3 \lambda_0 & t\phantom{^n} \geq \frac{2}{3} \Delta t \end{cases}
+    \lambda(t) &= \lambda_0 & &\text{or} & \lambda(t) &= \begin{cases} \phantom{-}3 \lambda_0 & t^n < t < \frac{2}{3} \Delta t \\ -3 \lambda_0 & t\phantom{^n} \geq \frac{2}{3} \Delta t \end{cases}
 \end{aligned}
 ```
 for $\Delta t = t^{n+1} - t^n$.
@@ -254,9 +254,7 @@ There are some assumptions that can mitigate this problem.  For example, if we a
 
 
 ### PINNs for the Vector Field-Parameterized Forced Advection-Diffusion Inverse Problem
-This section can be thought of a generalization of the ideas in the previous section, while adhering to the desire to analytically compute an accurate solution by means of a sufficiently accurate Runge-Kutta integration scheme.  Herin I discuss how I've implemented the ideas from Raissi et al. 2019 to the problem and data of forced advection-diffusion of sea ice.
-
-<!-- probably move notation down here if I redefine it everywhere, anyway -->
+This section can be thought of a generalization of the ideas in the previous section, while adhering to the desire to analytically compute an accurate solution by means of a sufficiently accurate Runge-Kutta integration scheme.  Herein I discuss how I've implemented the ideas from Raissi et al. 2019 to the problem and data of forced advection-diffusion of sea ice.
 
 
 ### The Endgame
