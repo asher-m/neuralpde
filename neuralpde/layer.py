@@ -104,6 +104,7 @@ class LocallyConnected2d(nn.Module):
                 'nn.Unfold and nn.functional.unfold only support 4-D tensors.'
             )
 
+
 class GaussianDistanceWeight(nn.Module):
     def __init__(
             self,
@@ -136,7 +137,7 @@ class GaussianDistanceWeight(nn.Module):
         else:
             raise ValueError('Received no coordinate ranges!')
 
-        self.dims = len(coordinates[0])
+        self.dim = len(coordinates[0])
         """ Number of spatial dimensions. """
 
         self.width = nn.Parameter(torch.ones(1))
@@ -144,35 +145,22 @@ class GaussianDistanceWeight(nn.Module):
 
     def forward(
             self,
-            x: torch.tensor
+            x: torch.Tensor
     ):
         """
         Args:
-            x:      A 2-D tensor where first dimension corresponds to batch, and second dimension
-                    is a collection of coordinates.
+            x:      A tensor where the last dimension corresponds to the number of dimensions
+                    (i.e. coordinate ranges) used at instance initialization.
 
-        `x.shape[1]` must be equal to the number of ranges in each (inner) tuple in `coordinates` passed to this
-        layer and initialization, (i.e., we must have received a position in each axis.)
+        If batched (i.e., multiple coordinate ranges were used at instance initialization,) the first axis of the input
+        tensor must correspond to the number of batches (coordinate ranges or number of tuples) pass at initialization.
         """
-        match len(x.shape):
-            case 2 if self.batched:
-                if not x.shape[1] == self.dims:  # batched coordinate arrays, batched x
-                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
-                d = torch.sqrt(torch.sum((self.coordinates - x[:, :, *(None,) * self.dims])**2, 1))
-            case 2:  # unbatched coordinate arrays, batched x
-                if not x.shape[1] == self.dims:
-                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
-                d = torch.sqrt(torch.sum((self.coordinates[None, ...] - x[:, :, *(None,) * self.dims])**2, 1))
-            case 1 if self.batched:  # batched coordinate arrays, unbatched x
-                if not x.shape[0] == self.dims:
-                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
-                d = torch.sqrt(torch.sum((self.coordinates - x[None, :, *(None,) * self.dims])**2, 1))
-            case 1:  # unbatched coordinate arrays, unbatched x
-                if not x.shape[0] == self.dims:
-                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
-                d = torch.sqrt(torch.sum((self.coordinates - x[:, *(None,) * self.dims])**2, 0))
-            case _:
-                raise ValueError(f'Receied misshape x of shape {x.shape} while expected len(x.shape) == 1 or len(x.shape) == 2!')
+        assert x.shape[-1] == self.dim, f'Received x with incompatible number of dimensions (x.shape[-1] = {x.shape[-1]}, expected {self.dim})!s'
+        if self.batched:
+            assert len(x) == len(self.coordinates), f'Received x with incompatible batch number (len(x) = {len(x)}, expected {len(self.coordinates)})!'
+            d = torch.sqrt(torch.sum((self.coordinates[:, *(None,) * (x.ndim - 2), ...] - x[:, ..., *(None,) * self.dim])**2, -1))
+        else:
+            d = torch.sqrt(torch.sum((self.coordinates[*(None,) * (x.ndim - 1), ...] - x[..., *(None,) * self.dim])**2, -1))
         return torch.exp(-1/2 * d**2 / self.width)
 
 
