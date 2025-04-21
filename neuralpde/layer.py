@@ -114,7 +114,7 @@ class GaussianDistanceWeight(nn.Module):
         Args:
             coordinates:        Tuple of 1-D tensors of coordinate ranges.  Coordinate ranges are usually
                                 monotonic, but I don't check and I don't think it will break anything.
-        
+
         Every tuple in *coordinates should have the same number of coordinate ranges (i.e., the same spatial dimension,)
         and corresponding coordinate ranges should have the same length.  For example, if coordinates = ((x1, y1), (x2, y2)),
         then len(x1) = len(x2) and len(y1) = len(y2).
@@ -123,12 +123,12 @@ class GaussianDistanceWeight(nn.Module):
 
         if len(coordinates) == 1:
             self.coordinates = nn.Buffer(
-                torch.stack(torch.meshgrid(*coordinates[0], indexing='xy'))
+                torch.stack(torch.meshgrid(*coordinates[0], indexing='ij'))
             )
             self.batched = False
         elif len(coordinates) > 1:
             self.coordinates = nn.Buffer(
-                torch.stack([torch.stack(torch.meshgrid(*c, indexing='xy')) for c in coordinates])
+                torch.stack([torch.stack(torch.meshgrid(*c, indexing='ij')) for c in coordinates])
             )
             self.batched = True
         else:
@@ -137,8 +137,8 @@ class GaussianDistanceWeight(nn.Module):
         self.dims = len(coordinates[0])
         """ Number of spatial dimensions. """
 
-        self.height = nn.Parameter(torch.ones(1))
         self.width = nn.Parameter(torch.ones(1))
+        """ Width of the Gaussian. """
 
     def forward(
             self,
@@ -152,33 +152,27 @@ class GaussianDistanceWeight(nn.Module):
         `x.shape[1]` must be equal to the number of ranges in each (inner) tuple in `coordinates` passed to this
         layer and initialization, (i.e., we must have received a position in each axis.)
         """
-        if len(x.shape) < 1 or len(x.shape) > 2:  # received in mistake
-            raise ValueError('Received an misshapen array of x values!')
+        match len(x.shape):
+            case 2 if self.batched:
+                if not x.shape[1] == self.dims:  # batched coordinate arrays, batched x
+                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
+                d = torch.sqrt(torch.sum((self.coordinates - x[:, :, *(None,) * self.dims])**2, 1))
+            case 2:  # unbatched coordinate arrays, batched x
+                if not x.shape[1] == self.dims:
+                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
+                d = torch.sqrt(torch.sum((self.coordinates[None, ...] - x[:, :, *(None,) * self.dims])**2, 1))
+            case 1 if self.batched:  # batched coordinate arrays, unbatched x
+                if not x.shape[0] == self.dims:
+                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
+                d = torch.sqrt(torch.sum((self.coordinates - x[None, :, *(None,) * self.dims])**2, 1))
+            case 1:  # unbatched coordinate arrays, unbatched x
+                if not x.shape[0] == self.dims:
+                    raise ValueError('Received incompatible x with number of coordinates from initialization!')
+                d = torch.sqrt(torch.sum((self.coordinates - x[:, *(None,) * self.dims])**2, 0))
+            case _:
+                raise ValueError(f'Receied misshape x of shape {x.shape} while expected len(x.shape) == 1 or len(x.shape) == 2!')
+        return torch.exp(-1/2 * d**2 / self.width)
 
-        elif self.batched and len(x.shape) == 2:  # batched coords, batched x
-            if not x.shape[1] == self.dims:
-                raise ValueError('Received incompatible x with number of coordinates from initialization!')
-            d = torch.sqrt(torch.sum((self.coordinates - x[:, :, *(None,) * self.dims])**2, 1))
-
-        elif not self.batched and len(x.shape) == 2:  # unbatched coords, batched x
-            if not x.shape[1] == self.dims:
-                raise ValueError('Received incompatible x with number of coordinates from initialization!')
-            d = torch.sqrt(torch.sum((self.coordinates[None, ...] - x[:, :, *(None,) * self.dims])**2, 1))
-
-        elif self.batched and len(x.shape) == 1:  # batched but want weights for one x
-            if not x.shape[0] == self.dims:
-                raise ValueError('Received incompatible x with number of coordinates from initialization!')
-            d = torch.sqrt(torch.sum((self.coordinates - x[None, :, *(None,) * self.dims])**2, 1))
-
-        elif not self.batched and len(x.shape) == 1:  # unbatched and want weights for one x
-            if not x.shape[0] == self.dims:
-                raise ValueError('Received incompatible x with number of coordinates from initialization!')
-            d = torch.sqrt(torch.sum((self.coordinates - x[:, *(None,) * self.dims])**2, 0))
-
-        else:
-            raise ValueError('Failed conditions above!  This should not be possible!')
-
-        return self.height * torch.exp(-1/2 * d / self.width)
 
 class NReLU(nn.Module):
     def __init__(self, n: int = 2, inplace=False):
