@@ -237,7 +237,7 @@ u(t, x) = u_0(x - \lambda t).
 Assume $\lambda$ is not constant on the interval $(t^n, t^{n+1})$.  Then there exist infinite time-varying parameterization $\lambda$ of the PDE.  In particular, the following two parameterizations produce data recorded at the endpoints $t^n$ and $t^{n+1}$,
 ```math
 \begin{aligned}
-    \lambda(t) &= \lambda_0 & &\text{or} & \lambda(t) &= \begin{cases} \phantom{-}3 \lambda_0 & t^n < t < \frac{2}{3} \Delta t \\ -3 \lambda_0 & t\phantom{^n} \geq \frac{2}{3} \Delta t \end{cases}
+    \lambda(t) &= \lambda_0 & &\text{or} & \lambda(t) &= \begin{cases} \phantom{-3} \lambda_0 & t\phantom{^n} \leq t^n \\ \phantom{-}3 \lambda_0 & t^n < t < \frac{2}{3} \Delta t + t^n \\ -3 \lambda_0 & t\phantom{^n} \geq \frac{2}{3} \Delta t + t^n \end{cases}
 \end{aligned}
 ```
 for $\Delta t = t^{n+1} - t^n$.
@@ -252,8 +252,8 @@ at endpoint $t^n$, and
 ```math
 \begin{aligned}
     u(t^{n+1}, x) &= u_0(x - \lambda_0 t^{n+1}) & &\text{and} & u(t^{n+1}, x) &= u_0(x - \lambda_0 t^n - 3 \lambda_0 \frac{2}{3}\Delta t + 3 \lambda_0 \frac{1}{3}\Delta t) \\
-                                                                     & & & & &= u_0(x - \lambda_0 t^n - \lambda_0 \Delta t) \\
-                                                                     & & & & &= u_0(x - \lambda_0 t^{n + 1})
+                                                                      & & & & &= u_0(x - \lambda_0 t^n - \lambda_0 \Delta t) \\
+                                                                      & & & & &= u_0(x - \lambda_0 t^{n + 1})
 
 \end{aligned}
 ```
