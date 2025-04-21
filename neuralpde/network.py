@@ -27,7 +27,7 @@ def normalize_xy(x: np.ndarray, y: np.ndarray) -> Tuple[Tuple[float, float], Tup
 
     Returns a tuple of ((scalex, scaley), (x_normalized, y_normalized)).
     """
-    assert len(x.shape) == 1 and len(y.shape) == 1, "I don't know how to handle multi-D arrays!"
+    assert x.ndim == 1 and y.ndim == 1, "I don't know how to handle multi-D arrays!"
     scalex, scaley = np.ptp(x), np.ptp(y)
     return (scalex, scaley), ((x - np.mean(x)) / scalex, (y - np.mean(y)) / scaley)
 
