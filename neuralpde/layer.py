@@ -179,3 +179,42 @@ class GaussianDistanceWeight(nn.Module):
             raise ValueError('Failed conditions above!  This should not be possible!')
 
         return self.height * torch.exp(-1/2 * d / self.width)
+
+class NReLU(nn.Module):
+    def __init__(self, n: int = 2, inplace=False):
+        r"""
+        A ReLU to the n'th power.  Nice because it's computationally fast, has unbounded
+        activation, and (n-1)-times continuously differentiable.
+
+        This also normalizes by n factorial so that the (n-1)'th and n'th derivatives match with
+        ReLU and the Heaviside, respectively.
+
+        Arguments:
+            n:          Power you to which you'd like to raise ReLU.  Also corresponds to the
+                        (n-1)-differentiability of this activation function.
+
+        Let typical ReLU $r$ and NReLU $r^n / n!$.  Note $r \in C^0(\mathbb{R})$, specifically,
+        $$
+            r' = \begin{cases}
+                0 & x \leq 0 \\
+                1 & x    > 0
+            \end{cases}
+        $$
+        Realize, of course, that $r'$ is not continuous.  On the other hand, $r^n / n! \in C^{n-1}(\mathbb{R})$, as,
+        $$
+            (r^n)' = \begin{cases}
+                0                & x \leq 0 \\
+                x^{n-1} / (n-1)! & x    > 0
+            \end{cases}
+        $$
+        """
+        if n > 4: warnings.warn(f"Received n = {n}!  This is big and might cause floating point "
+                                "problems.  Make sure you know what you're doing!")
+
+        super().__init__()
+        self.n = n
+        self.n_factorial = math.factorial(n)
+        self.ReLU = nn.ReLU(inplace)
+
+    def forward(self, x):
+        return self.ReLU(x)**self.n / self.n_factorial
