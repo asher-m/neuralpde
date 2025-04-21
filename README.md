@@ -155,7 +155,7 @@ The loss $L$ is minimized in $K$ iterations on a subset of the data $S^k \subset
 See [Raissi et al. 2019](https://doi.org/10.1016/j.jcp.2018.10.045) for more details, on which the above is significantly based.  The [Wikipedia page on PINNs](https://en.wikipedia.org/wiki/Physics-informed_neural_networks) also serves as an excellent resource and encyclopedia for additional resources.
 
 
-### PINNs for the Constant Scalar-Parameterized Inverse Problem
+### PINNs for the Constant Scalar-Parameterized Inverse Problem with Sparse Discrete Data
 Raissi et al. 2019, in addition to other interesting discussion, describes how to apply the PINN framework to problems with data collected at sparse time steps.  In particular, this can be thought of as a specialization of the preceeding discussion on PINNs in the general inverse problem context.  The following discussion covers section 4.2 of Raissi et al. 2019.
 
 Suppose we have some collection of samples at a time $t^n$ and time $t^{n+1}$.   In the notation of the preceding section, we have $N_S = N^{n}_S + N^{n+1}_S$ samples corresponding to index set $S = S^n \cup S^{n+1}$ such that,
