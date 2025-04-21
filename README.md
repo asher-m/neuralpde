@@ -195,19 +195,30 @@ This is equivalent to,
     u^{n+1} &= u^n + \Delta t \sum_{j=1}^q b_j D\left[ u^{n + c_j}; \lambda \right].
 \end{aligned}
 ```
-
-We construct a PINN $P$ to predict the values $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda$.  Raissi demonstrates how to rearrange the previous equations to estimate the solution $u$ at the endpoints of the interval from the predicted intermediate solutions $u^{n + c_j}$ and parameters $\lambda$ as below.  The first equation below is the first equation above reordered, and the second equation below can be found by subtracting the equations above.
+Raissi demonstrates how to rearrange the previous equations to estimate the solution $u$ at the endpoints of the interval from the predicted intermediate solutions $u^{n + c_j}$ and parameters $\lambda$ as below.  Specifically, the first equation below is the first equation above reordered, and the second equation below can be found by subtracting the equations above.
 ```math
 \begin{aligned}
-    \hat{u}^n_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q a_{ij} D\left[ \hat{u}^{n + c_j}; \hat{\lambda} \right] \\
-    \hat{u}^{n+1}_i &= \hat{u}^{n+c_i} - \Delta t \sum_{j=1}^q (a_{ij} - b_j) D\left[ \hat{u}^{n + c_j}; \hat{\lambda} \right]
+    u^n_i &= u^{n+c_i} - \Delta t \sum_{j=1}^q a_{ij} D\left[ u^{n + c_j}; \lambda \right] \\
+    u^{n+1}_i &= u^{n+c_i} - \Delta t \sum_{j=1}^q (a_{ij} - b_j) D\left[ u^{n + c_j}; \lambda \right]
 \end{aligned}
 ```
 for $i = 1, \dots, q$.  Note that Raissi formulates the PDE such that $D[u; \lambda]$ has the opposite sign, which results in an opposite sign associated with the $\Delta t \sum (\cdots)$ term.  
 
-Altogether, we have $2q$ equations, $q$ of which predict the solution at time $t^n$ with known solution $u^n$, and $q$ of which predict the solution at time $t^{n+1}$ with known solution $u^{n+1}$.
+We construct a PINN $P$ to predict the values $u^{n + c_1}, u^{n + c_2}, \dots, u^{n + c_q}$ and $\lambda$ for all $x \in x^S = x^{S^n} \cup x^{S^{n+1}}$,
+```math
+\left[ \hat{\lambda}, \hat{u}^{n + c_1}, \hat{u}^{n + c_2}, \dots, \hat{u}^{n + c_1} \right] = P(x^S)
+```
+Specfically, our PINN has yielded estimates of the solution $\hat{u}^{n + c_1}(x^{S^n}), \hat{u}^{n + c_2}(x^{S^n}), \dots, \hat{u}^{n + c_1}(x^{S^n})$, from which we estimate the solution at each $(t^{S^n}, x^{S^n})$ using the equation above for $u^{n}_i$, and $\hat{u}^{n + c_1}(x^{S^{n+1}}), \hat{u}^{n + c_2}(x^{S^{n+1}}), \dots, \hat{u}^{n + c_1}(x^{S^{n+1}})$, from which we estimate the solution at each $(t^{S^{n+1}}, x^{S^{n+1}})$ using the equation above for $u^{n+1}_i$.
 
-Precisely, we construct a neural network, yielding quantities $\hat{u}^{n + c_1}, \hat{u}^{n + c_2}, \dots, \hat{u}^{n + c_q}$ and $\hat{\lambda}^{n + c_1}, \hat{\lambda}^{n + c_2}, \dots, \hat{\lambda}^{n + c_q}$, on top of which we compose the preceding equations to estimate $\hat{u}^n_i$ and $\hat{u}^{n+1}_i$ for $i = 1, \dots, q$.
+Finally then, we compute a loss as some suitable norm of the errors of these estimates for the solution at each $x^{S^n}$ and $x^{S^{n+1}}$,
+```math
+\begin{aligned}
+    L &= L^{n}_i + L^{n+1}_i, & &\text{where} \\
+    L^{n}_i &= \left\| \hat{u}^{n}_i(x^{S^n}) - u^{S^n} \right\| & &\text{and} \\
+    L^{n+1}_i &= \left\| \hat{u}^{n+1}_i(x^{S^{n+1}}) - u^{S^{n+1}} \right\|
+\end{aligned}
+```
+for $i = 1, \dots, q$.
 
 
 #### Uniqueness of $\lambda$
