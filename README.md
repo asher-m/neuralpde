@@ -37,10 +37,10 @@ I define two collections of parameters to aide in the following discussion of th
 where
 ```math
 \begin{aligned}
-    \kappa, & \; \hat{\kappa}                                          & \sim & & & \text{diffusivity (resp. true and estimated)} \\
-    v, & \; \hat{v}                                                    & \sim & & & \text{first component of velocity (resp. true and estimated)} \\
-    w, & \; \hat{w}                                                    & \sim & & & \text{second component of velocity (resp. true and estimated)} \\
-    f, & \; \hat{f}                                                    & \sim & & & \text{forcing (resp. true and estimated.)} \\
+    \kappa, & \hat{\kappa}                                          & \sim & & & \text{diffusivity (resp. true and estimated)} \\
+    v, & \hat{v}                                                    & \sim & & & \text{first component of velocity (resp. true and estimated)} \\
+    w, & \hat{w}                                                    & \sim & & & \text{second component of velocity (resp. true and estimated)} \\
+    f, & \hat{f}                                                    & \sim & & & \text{forcing (resp. true and estimated.)} \\
 \end{aligned}
 ```
 
