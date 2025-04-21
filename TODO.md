@@ -1,18 +1,22 @@
-# For Delaney:
-1. For Monday: 
-    - Basic diffusivity, velocity, and forcing maps
-2. For Wednesday:
-    - Expand paper:
-        - Inverse PINN conditioned on input maps
+# Next:
+- Rewrite forward method
+- Rewrite model notebook/script to run network
+
 
 # Generally:
 ## Implementation
-- Implement locally fully-connected convolution
-- Implement Xavier initialization
+- Reimplement PINN as function over scalar (x, y)
+- Loss:
+    - Add bc loss for kappa = 0
+    - Add loss for kappa >= 0
+- Initialization:
+    - Implement Xavier initialization (i.e. for layers)
 - Profile network and try to speed up
-- Batch processing
+
 
 ## Writing
+- Finish fixing sign errors on diffusivity, velocity in README and implementation
+    - Check
 - Remake figures in README.md and for Delaney's paper
 - Rewrite in README how module works
     - "PINN for inverse vector-field parameterized PDE conditioned on solution"
