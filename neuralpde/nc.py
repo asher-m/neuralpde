@@ -100,17 +100,17 @@ class SeaIceV4():
         # assign attributes
         self.date = np.concatenate(date)
 
-        self.seaice_conc = np.concatenate(seaice_conc)
-        self.seaice_stdev = np.concatenate(seaice_stdev)
+        self.seaice_conc = np.concatenate(seaice_conc).transpose((0, 2, 1))
+        self.seaice_stdev = np.concatenate(seaice_stdev).transpose((0, 2, 1))
 
-        self.flag_missing = np.concatenate(flag_missing)
-        self.flag_land = np.concatenate(flag_land)
-        self.flag_coast = np.concatenate(flag_coast)
-        self.flag_lake = np.concatenate(flag_lake)
-        self.flag_hole = np.concatenate(flag_hole)
+        self.flag_missing = np.concatenate(flag_missing).transpose((0, 2, 1))
+        self.flag_land = np.concatenate(flag_land).transpose((0, 2, 1))
+        self.flag_coast = np.concatenate(flag_coast).transpose((0, 2, 1))
+        self.flag_lake = np.concatenate(flag_lake).transpose((0, 2, 1))
+        self.flag_hole = np.concatenate(flag_hole).transpose((0, 2, 1))
 
-        self.latitude = latitude[0]
-        self.longitude = longitude[0]
+        self.latitude = latitude[0].T
+        self.longitude = longitude[0].T
         self.meters_x = meters_x[0]
         self.meters_y = meters_y[0]
 
