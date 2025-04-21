@@ -245,7 +245,7 @@ for $\Delta t = t^{n+1} - t^n$.
 Exactly, this produces,
 ```math
 \begin{aligned}
-    u(t, x) &= u_0(x - \lambda_0 t^n) & &\text{and} & u(t, x) &= u_0(x - \lambda_0 t^n)
+    u(t^n, x) &= u_0(x - \lambda_0 t^n) & &\text{and} & u(t^n, x) &= u_0(x - \lambda_0 t^n)
 \end{aligned}
 ```
 at endpoint $t^n$, and
