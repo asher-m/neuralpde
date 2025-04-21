@@ -17,7 +17,7 @@ We're trying to understand ice flows in Earth's polar regions.  NOAA and NASA pu
 
 From observation, we believe the relevant physics to be governed by a forced advection-diffusion equation, like
 ```math
-    u_t = \nabla \cdot \left( \kappa \nabla u \right) + \vec{v} \cdot \nabla u + f
+    u_t = \nabla \cdot \left( \kappa \nabla u \right) - \nabla \cdot (\vec{v}  u) + f
 ```
 where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v, w)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
 
