@@ -18,7 +18,7 @@ class LocallyConnected2d(nn.Module):
             dilation: int = 1,
             padding: int = 0,
             stride: int = 1,
-        ):
+    ):
         """
         Initializes a locally-connected 2d layer.
 
@@ -108,7 +108,7 @@ class GaussianDistanceWeight(nn.Module):
     def __init__(
             self,
             *coordinates: Tuple[torch.Tensor]
-        ):
+    ):
         """
         Compute the Gaussian weight across an array of coordinates to a point x.  Outputs
         an array of weights.
@@ -145,7 +145,7 @@ class GaussianDistanceWeight(nn.Module):
     def forward(
             self,
             x: torch.tensor
-        ):
+    ):
         """
         Args:
             x:      A 2-D tensor where first dimension corresponds to batch, and second dimension
