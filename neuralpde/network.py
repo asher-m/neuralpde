@@ -197,25 +197,67 @@ class Network(nn.Module):
 
     def predict(
             self,
-            x: np.ndarray,
-            y: np.ndarray,
-            u: np.ndarray
-        ):
+            x_range: np.ndarray,
+            y_range: np.ndarray,
+            batch_size: int = 100
+    ):
         """
         Push data through the network for evaluation.
-
-        Arguments:
-            x:          x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                        specified at model initialization.
-            y:          y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                        specified at model initialization.
-            u:          Solution data of each cell.  Must be of size `shape` specified at model initialization.
-
-        Returns a numpy array.
         """
         self.eval()
         x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         return map(torch2np, self.forward(x, y, u))
+
+        results = {
+            'k': list(),
+            'v1': list(),
+            'v2': list(),
+            'f': list(),
+            'uhat_i': list(),
+            'uhat_f': list(),
+        }
+        indices = np.random.permutation(np.indices((len(x_range), len(y_range))).reshape((2, -1)).T)
+        x_range = np2torch(x_range).requires_grad_(True)
+        y_range = np2torch(y_range).requires_grad_(True)
+        for b in range(len(indices) // batch_size + 1):
+            idx_x = np2torch(indices[b*batch_size:(b+1)*batch_size, 0], dtype=torch.int)
+            idx_y = np2torch(indices[b*batch_size:(b+1)*batch_size, 1], dtype=torch.int)
+            x_fit = x_range[idx_x]
+            y_fit = y_range[idx_y]
+
+            r = torch.func.vmap(self.forward)(x_fit, y_fit)
+            r_x = torch.func.vmap(torch.func.jacrev(self.forward, 0))(x_fit, y_fit)
+            r_y = torch.func.vmap(torch.func.jacrev(self.forward, 1))(x_fit, y_fit)
+            r_xx = torch.func.vmap(torch.func.jacrev(torch.func.jacrev(self.forward, 0), 0))(x_fit, y_fit)
+            r_yy = torch.func.vmap(torch.func.jacrev(torch.func.jacrev(self.forward, 1), 1))(x_fit, y_fit)
+
+            k, v1, v2, f, urk = r[..., 0], r[..., 1], r[..., 2], r[..., 3], r[..., 4:]
+            k_x, v1_x, v2_x, urk_x = r_x[..., 0], r_x[..., 1], r_x[..., 2], r_x[..., 4:]
+            k_y, v1_y, v2_y, urk_y = r_y[..., 0], r_y[..., 1], r_y[..., 2], r_y[..., 4:]
+            urk_xx = r_xx[..., 4:]
+            urk_yy = r_yy[..., 4:]
+
+            pde = (  # not particularly pythonic, but easier to read
+                k.unsqueeze(-1) * (urk_xx + urk_yy) + (k_x.unsqueeze(-1) * urk_x + k_y.unsqueeze(-1) * urk_y)
+                - (v1_x.unsqueeze(-1) + v2_y.unsqueeze(-1)) * urk - (v1.unsqueeze(-1) * urk_x + v2.unsqueeze(-1) * urk_y)
+                + f
+            )
+
+            uhat_i = urk - dt * torch.einsum('ij,bj->bi', self.rk_A, pde)
+            uhat_f = urk - dt * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
+
+            results['k'].append(k)
+            results['v1'].append(v1)
+            results['v2'].append(v2)
+            results['f'].append(f)
+            results['uhat_i'].append(uhat_i)
+            results['uhat_f'].append(uhat_f)
+
+        for key in results.keys():
+            results[key] = torch2np(torch.cat(results[key])).reshape((len(x_range), len(y_range), -1))
+
+        return results
+
 
     def fit(
             self,
