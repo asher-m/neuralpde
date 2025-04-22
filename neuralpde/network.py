@@ -54,12 +54,12 @@ def RK(q: int = 100):
     return A, b, c
 
 
-def np2torch(d):
+def np2torch(d, dtype=DTYPE):
     """
     Export numpy data to torch in every meaningful way, including sending it to the
     compute accelerator and casting it to the appropriate datatype.
     """
-    return torch.from_numpy(d).to(DEVICE, DTYPE)
+    return torch.from_numpy(d).to(DEVICE, dtype)
 
 
 def torch2np(d):
