@@ -161,6 +161,7 @@ class GaussianDistanceWeight(nn.Module):
             d = torch.sqrt(torch.sum((self.coordinates[:, *(None,) * (x.ndim - 2), ...] - x[:, ..., *(None,) * self.dim])**2, -3))
         else:
             d = torch.sqrt(torch.sum((self.coordinates[*(None,) * (x.ndim - 1), ...] - x[..., *(None,) * self.dim])**2, -3))
+        return torch.exp(-1/2 * d**2 / self.width**2)
 
 
 class NReLU(nn.Module):
