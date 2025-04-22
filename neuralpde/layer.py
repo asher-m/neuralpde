@@ -158,10 +158,10 @@ class GaussianDistanceWeight(nn.Module):
         assert x.shape[-1] == self.dim, f'Received x with incompatible number of dimensions (x.shape[-1] = {x.shape[-1]}, expected {self.dim})!s'
         if self.batched:
             assert len(x) == len(self.coordinates), f'Received x with incompatible batch number (len(x) = {len(x)}, expected {len(self.coordinates)})!'
-            d = torch.sqrt(torch.sum((self.coordinates[:, *(None,) * (x.ndim - 2), ...] - x[:, ..., *(None,) * self.dim])**2, -3))
+            dsq = torch.sum((self.coordinates[:, *(None,) * (x.ndim - 2), ...] - x[:, ..., *(None,) * self.dim])**2, -3)
         else:
-            d = torch.sqrt(torch.sum((self.coordinates[*(None,) * (x.ndim - 1), ...] - x[..., *(None,) * self.dim])**2, -3))
-        return torch.exp(-1/2 * d**2 / self.width**2)
+            dsq = torch.sum((self.coordinates[*(None,) * (x.ndim - 1), ...] - x[..., *(None,) * self.dim])**2, -3)
+        return torch.exp(-1/2 * dsq / self.width**2)
 
 
 class NReLU(nn.Module):

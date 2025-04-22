@@ -12,7 +12,7 @@
 - Initialization:
     - Implement Xavier initialization (i.e. for layers)
 - Profile network and try to speed up
-
+- Figure out sqrt(.) and (.)**2 bug in GaussianDistanceWeight
 
 ## Writing
 - Finish fixing sign errors on diffusivity, velocity in README and implementation
