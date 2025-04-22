@@ -135,19 +135,12 @@ class Network(nn.Module):
         self.register_buffer('ones_ddu_rk', ones_ddu_rk)
 
 
-    def load_data(
-             self,
-             u: np.ndarray
-        ) -> None:
+    def data_(
+            self,
+            u: np.ndarray,
+    ) -> None:
         """
         Load sea ice data into the network.
-        
-        If not batching, `np.ndarray` must be like (T, N, M), where T is the number of timesteps,
-        and N and M are spatial dimensions.  If batching, `np.ndarray` must be of shape (B, T, N, M),
-        where B is the batch dimension, in addition to the parameters of the unbatched input.  See the
-        shape parameter in this module's initialization.
-
-        This method may need to be redesigned if it's too slow or is called often.
 
         Arguments:
             u:      Data conditioning the model.
@@ -158,11 +151,7 @@ class Network(nn.Module):
             data = np2torch(u).unsqueeze(0).contiguous()
         else:
             raise ValueError('Receieved data of an incompatible shape.  Check docstring!')
-
-        if 'data' not in [s for s, _ in self.named_buffers(recurse=False)]:
-            self.data = nn.Buffer(data)
-        else:
-            self.data = data
+        self.data = nn.Buffer(self.padding(data))
 
 
     def forward(
