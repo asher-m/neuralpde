@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 from torchviz import make_dot
 
-from .layer import LocallyConnected2d
+from . import layer
 
 
 
@@ -73,66 +73,75 @@ class Network(nn.Module):
     def __init__(
             self,
             q: int,
-            shape: Tuple[int],
-            kernel: int
-        ) -> None:
+            Nt: int,
+            x_range: np.ndarray,
+            y_range: np.ndarray,
+            kernel_xy: int,
+            kernel_stack: int = 10
+    ) -> None:
         """
         Initialize the PINN.
 
         Arguments:
-            loss:           Loss function over which to train.  Loss function must only use Python
-                            primitive operators (+, -, *, /, **, etc...) and Torch built-ins.
-            q:              Number of stages q used in RK scheme to compute loss.  See Raissi 2019.
-            shape:          Shape of input data like (T, N, M), where T is the number of timesteps,
-                            and N and M are spatial dimensions.
-            kernel:         Size of kernel over which to convolve.
+            q:                  Number of stages q used in RK scheme to compute loss.  See Raissi 2019.
+            Nt:                 Number of solution maps (i.e., in time) included in buffer.  The network is conditioned on these known solutions.
+            x_range:            The x coordinate range as a 1-D array.
+            y_range:            The y coordinate range as a 1-D array.
+            kernel_xy:          Size of kernel over which to convolve.
+            kernel_stack:       Number of neurons in the FC stack per output channel.
+        Nt must be the same for every batch, data for which must be loaded through `Network.load_data`.
         """
         super().__init__()
 
         self.q = q
-        self.shape = shape
-        self.kernel = kernel
+        self.Nt = Nt
+        self.dx = np.diff(x_range)[0]
+        assert np.all(np.isclose(np.diff(x_range), self.dx)), 'Received irregularly shaped x_range!'
+        self.dy = np.diff(y_range)[0]
+        assert np.all(np.isclose(np.diff(y_range), self.dy)), 'Received irregularly shaped y_range!'
+        self.kernel = kernel_xy
+        assert kernel_xy % 2 == 1, 'Kernel size must be odd!'
 
-        assert self.kernel % 2 == 1, "Kernel size must be odd!"
-        self.padding = self.kernel // 2
-
-        self.rk_A, self.rk_b, self.rk_c = RK(self.q)
-
-        self.channels_in = 2 + self.shape[0]  # 2 channels for spatial coords + shape[0] channels for input timesteps
-        self.channels_hidden = 2 * (4 + self.q)
-        self.channels_out = 4 + self.q  # 4 channels for kappa, v (2d vector) and f + q channels for intermediate RK stages
-
-        self.layers = nn.Sequential(
-            LocallyConnected2d(self.channels_in, self.channels_hidden, self.shape[1:], kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU(),
-            nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU(),
-            nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU(),
-            nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU(),
-            nn.Conv2d(self.channels_hidden, self.channels_hidden, kernel_size=self.kernel, padding=self.padding),
-            nn.ReLU(),
-            LocallyConnected2d(self.channels_hidden, self.channels_out, self.shape[1:], kernel_size=self.kernel, padding=self.padding)
+        # make kernel offsets
+        self.offsets_xy = nn.Buffer(
+            np2torch(
+                ((np.indices((kernel_xy, kernel_xy)) - kernel_xy // 2) * \
+                 np.array((self.dx, self.dy))[:, None, None]).transpose((1, 2, 0))
+            )
         )
 
-        # gradient insanity
-        ones_dkappa = torch.zeros((self.channels_out,) + self.shape[1:])
-        ones_dkappa[0] = 1
-        self.register_buffer('ones_dkappa', ones_dkappa)
-        ones_dv1 = torch.zeros((self.channels_out,) + self.shape[1:])
-        ones_dv1[1] = 1
-        self.register_buffer('ones_dv1', ones_dv1)
-        ones_dv2 = torch.zeros((self.channels_out,) + self.shape[1:])
-        ones_dv2[2] = 1
-        self.register_buffer('ones_dv2', ones_dv2)
-        ones_du_rk = list()
-        for i in range(self.q):
-            ones_du_rk.append(torch.zeros((self.channels_out,) + self.shape[1:]))
-            ones_du_rk[i][4 + i] = 1
-        self.register_buffer('ones_du_rk', torch.stack(ones_du_rk).contiguous())
-        ones_ddu_rk = torch.ones(self.shape[1:])
-        self.register_buffer('ones_ddu_rk', ones_ddu_rk)
+        self.rk_A, self.rk_b, self.rk_c = map(nn.Buffer, RK(q))
+
+        channels = 4 + q  # parameters + rk stages
+        self.spatial_correlation = layer.GaussianDistanceWeight(  # recreate ranges to handle padding
+            (
+                torch.linspace(x_range[0] - kernel_xy//2 * self.dx, x_range[-1] + kernel_xy//2 * self.dx, len(x_range) + kernel_xy - 1),
+                torch.linspace(y_range[0] - kernel_xy//2 * self.dy, y_range[-1] + kernel_xy//2 * self.dy, len(y_range) + kernel_xy - 1)
+            )
+        )
+        nn.init.constant_(self.spatial_correlation.width, min(abs(self.dx), abs(self.dy)) / 1.5)
+        self.padding = nn.ReflectionPad2d(kernel_xy//2)
+        self.layers = nn.Sequential(
+            nn.Linear(Nt * kernel_xy**2, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.ReLU(),
+            nn.Linear(channels * kernel_stack, channels)
+        )
 
 
     def data_(
@@ -156,67 +165,35 @@ class Network(nn.Module):
 
     def forward(
             self,
-            x: torch.tensor,
-            y: torch.tensor,
-            u: torch.tensor,
-            do_graphs: bool = False
-        ):
+            x: torch.Tensor,
+            y: torch.Tensor,
+            batch_num: int = 0,
+    ) -> torch.Tensor:
         """
         Push data through the network for training.
 
         Arguments:
-            x:              x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                            specified at model initialization.
-            y:              y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                            specified at model initialization.
-            u:              Solution data of each cell.  Must be of size `shape` specified at model initialization.
+            x:          1-D tensor of x-values at which to evaluate the solution of length batch size.
+            y:          1-D tensor of y-values at which to evaluate the solution of length batch size.
+            batch_num:  Index of self.data to use.  Only used when x and y are scalars.
 
-        Returns a tuple of tensors on `DEVICE`.
+        Returns a tensor on `DEVICE`.
         """
-        outs = self.layers(torch.stack((x, y, *u)).contiguous())
+        if x.ndim > 0:  # non-scalar case
+            r = self.spatial_correlation(torch.stack((x, y), axis=-1)[:, None, None, :] + self.offsets_xy[None, ...])
+            r = r[:, None, ...] * self.data[:, :, None, None, ...]
+            r = torch.sum(r, dim=(-1, -2))
+            r = r.flatten(1, -1)
+            r = self.layers(r)
+            return r
+        else:
+            r = self.spatial_correlation(torch.stack((x, y))[None, None, :] + self.offsets_xy)
+            r = r[None, ...] * self.data[batch_num, :, None, None, ...]
+            r = torch.sum(r, dim=(-1, -2))
+            r = r.flatten(0, -1)
+            r = self.layers(r)
+            return r
 
-        # break out nn params
-        kappa = outs[0]
-        v1 = outs[1]
-        v2 = outs[2]
-        f = outs[3]
-        u_rk = outs[4:]
-
-        # compute gradients
-        kappa_x, kappa_y = torch.autograd.grad(outs, (x, y), self.ones_dkappa, create_graph=True)
-        v1_x, v1_y = torch.autograd.grad(outs, (x, y), self.ones_dv1, create_graph=True)
-        v2_x, v2_y = torch.autograd.grad(outs, (x, y), self.ones_dv2, create_graph=True)
-        u_rk_x = torch.empty_like(outs[4:])  # can I optimize creating all of these arrays?
-        u_rk_y = torch.empty_like(outs[4:])
-        u_rk_xx = torch.empty_like(outs[4:])
-        u_rk_yy = torch.empty_like(outs[4:])
-        for i in range(self.q):
-            u_rk_x[i] = torch.autograd.grad(outs, x, self.ones_du_rk[i], create_graph=True)[0]
-            u_rk_y[i] = torch.autograd.grad(outs, y, self.ones_du_rk[i], create_graph=True)[0]
-            u_rk_xx[i] = torch.autograd.grad(u_rk_x[i], x, self.ones_ddu_rk, create_graph=True)[0]
-            u_rk_yy[i] = torch.autograd.grad(u_rk_y[i], y, self.ones_ddu_rk, create_graph=True)[0]
-
-        # evaluate pde
-        pde = kappa.unsqueeze(0) * (u_rk_xx + u_rk_yy) + (kappa_x.unsqueeze(0) * u_rk_x + kappa_y.unsqueeze(0) * u_rk_y) + \
-            (v1.unsqueeze(0) * u_rk_x + v2.unsqueeze(0) * u_rk_y) + f
-
-        # estimate solution with pde
-        uhat_i = u_rk - dt * torch.einsum('ij,jkl->ikl', self.rk_A, pde)
-        uhat_f = u_rk - dt * torch.einsum('ij,jkl->ikl', (self.rk_A - self.rk_b.unsqueeze(0)), pde)
-
-        # make graphs, if you want
-        if do_graphs:
-            make_dot(kappa, params=dict(list(self.named_parameters()))).render('graph/kappa', format='pdf', cleanup=True)
-            make_dot(v1, params=dict(list(self.named_parameters()))).render('graph/v1', format='pdf', cleanup=True)
-            make_dot(f, params=dict(list(self.named_parameters()))).render('graph/f', format='pdf', cleanup=True)
-            make_dot(u_rk, params=dict(list(self.named_parameters()))).render('graph/u_rk', format='pdf', cleanup=True)
-            make_dot(kappa_x, params=dict(list(self.named_parameters()))).render('graph/kappa_x', format='pdf', cleanup=True)
-            make_dot(u_rk_x, params=dict(list(self.named_parameters()))).render('graph/u_rk_x', format='pdf', cleanup=True)
-            make_dot(u_rk_xx, params=dict(list(self.named_parameters()))).render('graph/u_rk_xx', format='pdf', cleanup=True)
-            make_dot(uhat_i, params=dict(list(self.named_parameters()))).render('graph/uhat_i', format='pdf', cleanup=True)
-            make_dot(uhat_f, params=dict(list(self.named_parameters()))).render('graph/uhat_f', format='pdf', cleanup=True)
-
-        return uhat_i, uhat_f, kappa, kappa_x, kappa_y, v1, v1_x, v1_y, v2, v2_x, v2_y, f
 
     def predict(
             self,
