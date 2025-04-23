@@ -78,7 +78,7 @@ class Network(nn.Module):
             x_range: np.ndarray,
             y_range: np.ndarray,
             kernel_xy: int,
-            kernel_stack: int = 10
+            kernel_stack: int
     ) -> None:
         """
         Initialize the PINN.
