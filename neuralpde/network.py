@@ -269,64 +269,102 @@ class Network(nn.Module):
 
     def fit(
             self,
-            x: np.ndarray,
-            y: np.ndarray,
             u: np.ndarray,
+            x_range: np.ndarray,
+            y_range: np.ndarray,
+            mask_inte: np.ndarray,
+            mask_peri: np.ndarray,
             weights: np.ndarray,
-            mask_coast: np.ndarray,
-            mask_other: np.ndarray,
             epochs: int = 1000,
             lr: float = 1e-3,
-        ):
+            batch_size: int = 100,
+            shuffle: int = 10
+    ):
         """
         Train the PINN.
 
         Arguments:
-            x:              x-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                            specified at model initialization.
-            y:              y-spatial coordinates of each cell in the solution u.  Must be of size `shape[1:])`
-                            specified at model initialization.
-            u:              Solution data of each cell.  Must be of size `shape` specified at model initialization.
+            u:              Solution data of each cell at t_{n} and t_{n+1}.  Must be of shape (2, N, M).
+            x_range:        The x coordinate range as a 1-D array of length N.
+            y_range:        The y coordinate range as a 1-D array of length M.
+            mask_inte:      Mask of the interior of the domain in which the PDE will be enforced (and interior loss terms.)  Must be of shape (N, M).
+            mask_peri:      Mask of the perimeter of the domain on which the boundary conditions will be enforced (and boundary loss terms.)  Must be of shape (N, M).
             weights:        Weights of each term in the loss. These are NOT weights of the model.
             epochs:         Number of epochs to run.
             lr:             Learning rate passed to Adam optimizer.
-            do_graphs:      Make torchviz graphs of the computational graph.
+            batch_size:     Number of solution points on which to simultaneously train.
+            shuffle:        Shuffle the set of solution points after this many epochs.
         """
-        x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
         weights = np2torch(weights)
-        mask_coast, mask_other = np2torch(mask_coast), np2torch(~mask_other)
+        mask_inte, mask_peri = np2torch(mask_inte, dtype=bool), np2torch(mask_peri, dtype=bool)
         optimizer = optim.Adam(self.parameters(), lr=lr)
 
-        # get true solution values
-        u_i = u[len(u) // 2]
-        u_f = u[len(u) // 2 + 1]
+        # cast ndarrays to tensors
+        u = np2torch(u)
+        x_range = np2torch(x_range)
+        y_range = np2torch(y_range)
 
-        # touch training file (if this disappears, we stop)
-        _training = Path('training')
-        _training.touch()
+        # make indices
+        indices = (mask_inte | mask_peri).nonzero().T
 
+        # make right-hand vectors for Jacobian computation
+        diff_r = torch.ones((batch_size, self.channels), device=DEVICE).requires_grad_(True)
+        diff_p = torch.ones((batch_size), device=DEVICE).requires_grad_(True)
+
+        # do the training
         self.train()
         losses = list()
-        for e in range(epochs):
+        t = Path('training')  # training lockfile
+        t.touch()
+        e = 0
+        while t.exists() and e < epochs + 1:
             print(f'Starting epoch {e}...', end='\r')
 
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
 
-            uhat_i, uhat_f, kappa, kappa_x, kappa_y, v1, v1_x, v1_y, v2, v2_x, v2_y, f = \
-                self.forward(x, y, u)
+            if e % shuffle == 0:  # shuffle the set of training points
+                idx = torch.randint(0, indices.shape[-1], (batch_size,), device=DEVICE)
+                x = x_range[indices[0, idx]].requires_grad_(True)
+                y = y_range[indices[1, idx]].requires_grad_(True)
+                u_i = u[0, indices[0, idx], indices[1, idx]]
+                u_f = u[1, indices[0, idx], indices[1, idx]]
+                mi = mask_inte[indices[0, idx], indices[1, idx]]
+                mb = mask_peri[indices[0, idx], indices[1, idx]]
+
+
+            r = self.forward(x, y)
+            r_x, = torch.autograd.grad(torch.autograd.grad(r, x, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
+            r_xx, = torch.autograd.grad(torch.autograd.grad(r_x, x, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
+            r_y, = torch.autograd.grad(torch.autograd.grad(r, y, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
+            r_yy, = torch.autograd.grad(torch.autograd.grad(r_y, y, diff_r, create_graph=True), diff_r, diff_p, create_graph=False)
+
+            k, v1, v2, f, urk = r[..., 0], r[..., 1], r[..., 2], r[..., 3], r[..., 4:]
+            k_x, v1_x, v2_x, urk_x = r_x[..., 0], r_x[..., 1], r_x[..., 2], r_x[..., 4:]
+            k_y, v1_y, v2_y, urk_y = r_y[..., 0], r_y[..., 1], r_y[..., 2], r_y[..., 4:]
+            urk_xx = r_xx[..., 4:]
+            urk_yy = r_yy[..., 4:]
+
+            pde = (  # not particularly pythonic, but easier to read
+                k.unsqueeze(-1) * (urk_xx + urk_yy) + (k_x.unsqueeze(-1) * urk_x + k_y.unsqueeze(-1) * urk_y)
+                - (v1_x.unsqueeze(-1) + v2_y.unsqueeze(-1)) * urk - (v1.unsqueeze(-1) * urk_x + v2.unsqueeze(-1) * urk_y)
+                + f.unsqueeze(-1)
+            )
+
+            uhat_i = urk - dt * torch.einsum('ij,bj->bi', self.rk_A, pde)
+            uhat_f = urk - dt * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
 
             # compute loss with estimate and actual solution
-            loss_u_i = torch.sum(mask_other.unsqueeze(0) * (uhat_i - u_i.unsqueeze(0))**2)
-            loss_u_f = torch.sum(mask_other.unsqueeze(0) * (uhat_f - u_f.unsqueeze(0))**2)
+            loss_u_i = torch.sum(mi.unsqueeze(-1) * (uhat_i - u_i.unsqueeze(-1))**2)
+            loss_u_f = torch.sum(mi.unsqueeze(-1) * (uhat_f - u_f.unsqueeze(-1))**2)
 
             # compute other loss terms
-            loss_bc = torch.sum(mask_coast.unsqueeze(0) * (v1**2 + v2**2))
-            loss_kappa_reg = torch.sum(mask_other.unsqueeze(0) * (kappa_x**2 + kappa_y**2))
-            loss_v_reg = torch.sum(mask_other.unsqueeze(0) * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
-            loss_f_min = torch.sum(mask_other.unsqueeze(0) * (f**2))
+            loss_bc = torch.sum(mb * (v1**2 + v2**2)) + torch.sum(mb * k**2)
+            loss_k_reg = torch.sum(mi * (k_x**2 + k_y**2))
+            loss_v_reg = torch.sum(mi * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
+            loss_f_min = torch.sum(mi * (f**2))
 
-            # compute final loss
-            loss = torch.stack((loss_u_i, loss_u_f, loss_bc, loss_kappa_reg, loss_v_reg, loss_f_min)) @ weights
+            # compute net loss
+            loss = torch.stack((loss_u_i, loss_u_f, loss_bc, loss_k_reg, loss_v_reg, loss_f_min)) @ weights
 
             loss.backward()
             optimizer.step()
@@ -334,12 +372,13 @@ class Network(nn.Module):
             losses.append(loss.item())
             if e % 10 == 0:
                 print(
-                    f'Epoch {e:5d}, loss {losses[-1]:10.2f}' +
-                    (f', relative improvement {100 * (1 - losses[-1] / losses[-10]):10.2f}%' if e > 0 else '')
+                    f'Epoch {e:5d} of {epochs:5d}, loss {losses[-1]:10.2f}' +
+                    (f', relative improvement {100 * (1 - losses[-1] / losses[-11]):10.2f}%' if e > 0 else '')
                 )
-                if not _training.exists():  # stop if training file disappeared
-                    break
 
-        _training.unlink(missing_ok=True)
+            del r, r_x, r_y, r_xx, r_yy
+            e += 1
+
+        t.unlink(missing_ok=True)  # remove lockfile
 
         return losses
