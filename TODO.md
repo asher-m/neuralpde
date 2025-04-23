@@ -5,18 +5,17 @@
 
 # Generally:
 ## Implementation
-- Reimplement PINN as function over scalar (x, y)
+- Finish model script, create model notebook
+- Implement training and inference over many t_n
 - Loss:
-    - Add bc loss for kappa = 0
     - Add loss for kappa >= 0
-- Initialization:
-    - Implement Xavier initialization (i.e. for layers)
-- Profile network and try to speed up
-- Figure out sqrt(.) and (.)**2 bug in GaussianDistanceWeight
+- Figure out sqrt(...) and pow(..., 2) bug in GaussianDistanceWeight
+- Fix device handling in Network
+    - In some places, tensors are created on the GPU
+    - In some places, tensors are created on the CPU and the user is expected to move them to the GPU
 
 ## Writing
-- Finish fixing sign errors on diffusivity, velocity in README and implementation
-    - Check
-- Remake figures in README.md and for Delaney's paper
+- Check sign (+/-) fix on diffusivity, velocity in README and implementation
+- Remake figures in README.md
 - Rewrite in README how module works
     - "PINN for inverse vector-field parameterized PDE conditioned on solution"
