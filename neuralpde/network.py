@@ -36,7 +36,7 @@ def normalize_data(u: np.ndarray):
     raise ValueError('Sea ice data already normalized!')
 
 
-def RK(q: int = 100):
+def RK(q: int = 100) -> Tuple[torch.Tensor]:
     """
     Get an implicit Runge-Kutta scheme with `q` stages.
 
@@ -54,7 +54,7 @@ def RK(q: int = 100):
     return A, b, c
 
 
-def np2torch(d, dtype=DTYPE):
+def np2torch(d, dtype=DTYPE) -> torch.Tensor:
     """
     Export numpy data to torch in every meaningful way, including sending it to the
     compute accelerator and casting it to the appropriate datatype.
@@ -62,7 +62,7 @@ def np2torch(d, dtype=DTYPE):
     return torch.from_numpy(d).to(DEVICE, dtype)
 
 
-def torch2np(d):
+def torch2np(d) -> np.ndarray:
     """
     Export torch data back to numpy.
     """
