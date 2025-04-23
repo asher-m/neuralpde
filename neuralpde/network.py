@@ -112,7 +112,7 @@ class Network(nn.Module):
 
         self.rk_A, self.rk_b, self.rk_c = map(nn.Buffer, RK(q))
 
-        channels = 4 + q  # parameters + rk stages
+        self.channels = 4 + q  # parameters + rk stages
         self.spatial_correlation = layer.GaussianDistanceWeight(  # recreate ranges to handle padding
             (
                 torch.linspace(x_range[0] - kernel_xy//2 * self.dx, x_range[-1] + kernel_xy//2 * self.dx, len(x_range) + kernel_xy - 1),
@@ -122,25 +122,25 @@ class Network(nn.Module):
         nn.init.constant_(self.spatial_correlation.width, min(abs(self.dx), abs(self.dy)) / 1.5)
         self.padding = nn.ReflectionPad2d(kernel_xy//2)
         self.layers = nn.Sequential(
-            nn.Linear(Nt * kernel_xy**2, channels * kernel_stack),
+            nn.Linear(Nt * kernel_xy**2, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels * kernel_stack),
+            nn.Linear(self.channels * kernel_stack, self.channels * kernel_stack),
             nn.ReLU(),
-            nn.Linear(channels * kernel_stack, channels)
+            nn.Linear(self.channels * kernel_stack, self.channels)
         )
 
 
