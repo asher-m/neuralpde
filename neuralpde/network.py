@@ -22,8 +22,7 @@ else:
     DEVICE = 'cpu'
 DTYPE = torch.float32
 
-# dt = 1, right?
-dt = 1
+DT = 1
 
 
 
@@ -262,8 +261,8 @@ class Network(nn.Module):
                 + f.unsqueeze(-1)
             )
 
-            uhat_i = urk - dt * torch.einsum('ij,bj->bi', self.rk_A, pde)
-            uhat_f = urk - dt * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
+            uhat_i = urk - DT * torch.einsum('ij,bj->bi', self.rk_A, pde)
+            uhat_f = urk - DT * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
 
             results['k'].append(torch2np(k))
             results['v1'].append(torch2np(v1))
@@ -363,8 +362,8 @@ class Network(nn.Module):
                 + f.unsqueeze(-1)
             )
 
-            uhat_i = urk - dt * torch.einsum('ij,bj->bi', self.rk_A, pde)
-            uhat_f = urk - dt * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
+            uhat_i = urk - DT * torch.einsum('ij,bj->bi', self.rk_A, pde)
+            uhat_f = urk - DT * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
 
             # compute loss with estimate and actual solution
             loss_u_i = torch.sum(mi.unsqueeze(-1) * (uhat_i - u_i.unsqueeze(-1))**2)
