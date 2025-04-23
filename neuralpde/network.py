@@ -145,6 +145,14 @@ class Network(nn.Module):
         )
 
 
+    def save(self, path: str | Path):
+        torch.save(self.state_dict(), path)
+
+
+    def load(self, path: str | Path, **kwargs):
+        self.load_state_dict(torch.load(path), **kwargs)
+
+
     def data_(
             self,
             u: np.ndarray,
