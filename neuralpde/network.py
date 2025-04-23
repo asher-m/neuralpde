@@ -17,7 +17,7 @@ from . import layer
 if torch.cuda.is_available():
     DEVICE = 'cuda'
 elif torch.xpu.is_available():
-    DEVICE = 'xpu'
+    pass
 else:
     DEVICE = 'cpu'
 DTYPE = torch.float32
