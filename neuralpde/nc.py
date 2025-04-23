@@ -127,7 +127,7 @@ class SeaIceV5():
         raise NotImplementedError()
 
 
-def check_boundaries(indices: List[int] | Tuple[int], d: SeaIceV4 | SeaIceV5) -> None:
+def check_boundaries(indices: List[int] | Tuple[int] | np.ndarray[int], d: SeaIceV4 | SeaIceV5) -> None:
     """
     Verify that boundaries at each index in `indices` are the same (constant,) and fails if not.
 
@@ -136,8 +136,9 @@ def check_boundaries(indices: List[int] | Tuple[int], d: SeaIceV4 | SeaIceV5) ->
         d:              Sea ice data object.
     """ 
     indices = list(indices)   
-    assert np.all(d.flag_missing[indices[0]] == d.flag_missing[indices])
-    assert np.all(d.flag_land[indices[0]] == d.flag_land[indices])
-    assert np.all(d.flag_coast[indices[0]] == d.flag_coast[indices])
-    assert np.all(d.flag_lake[indices[0]] == d.flag_lake[indices])
-    assert np.all(d.flag_hole[indices[0]] == d.flag_hole[indices])
+    if not np.all(d.flag_missing[indices[0]] == d.flag_missing[indices]) or \
+        not np.all(d.flag_land[indices[0]] == d.flag_land[indices]) or \
+        not np.all(d.flag_coast[indices[0]] == d.flag_coast[indices]) or \
+        not np.all(d.flag_lake[indices[0]] == d.flag_lake[indices]) or \
+        not np.all(d.flag_hole[indices[0]] == d.flag_hole[indices]):
+        raise ValueError('Found inconsistent boundaries in data!')
