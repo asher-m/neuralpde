@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import torch
 import torch.nn as nn
@@ -203,10 +204,14 @@ class Network(nn.Module):
     ):
         """
         Push data through the network for evaluation.
+
+        Arguments:
+            x_range:        1-D array of x coordinates of collocation points at which to evaluate the solution.
+            y_rage:         1-D array of y coordiantes of collocation points at which to evaluate the solution.
+            batch_size:     How many collocation points to evaluate simultaneously.  Choose this to be as large
+                            as your GPU's memory will allow.
         """
         self.eval()
-        x, y, u = np2torch(x).requires_grad_(True), np2torch(y).requires_grad_(True), np2torch(u).requires_grad_(False)
-        return map(torch2np, self.forward(x, y, u))
 
         results = {
             'k': list(),
@@ -216,20 +221,21 @@ class Network(nn.Module):
             'uhat_i': list(),
             'uhat_f': list(),
         }
-        indices = np.random.permutation(np.indices((len(x_range), len(y_range))).reshape((2, -1)).T)
+        indices = np2torch(np.indices((len(x_range), len(y_range))).reshape((2, -1)), dtype=torch.int)
         x_range = np2torch(x_range).requires_grad_(True)
         y_range = np2torch(y_range).requires_grad_(True)
-        for b in range(len(indices) // batch_size + 1):
-            idx_x = np2torch(indices[b*batch_size:(b+1)*batch_size, 0], dtype=torch.int)
-            idx_y = np2torch(indices[b*batch_size:(b+1)*batch_size, 1], dtype=torch.int)
-            x_fit = x_range[idx_x]
-            y_fit = y_range[idx_y]
+        for i in range(math.ceil(indices.shape[-1] / batch_size)):
+            x = x_range[indices[0, i * batch_size:(i + 1) * batch_size]]
+            y = y_range[indices[1, i * batch_size:(i + 1) * batch_size]]
 
-            r = torch.func.vmap(self.forward)(x_fit, y_fit)
-            r_x = torch.func.vmap(torch.func.jacrev(self.forward, 0))(x_fit, y_fit)
-            r_y = torch.func.vmap(torch.func.jacrev(self.forward, 1))(x_fit, y_fit)
-            r_xx = torch.func.vmap(torch.func.jacrev(torch.func.jacrev(self.forward, 0), 0))(x_fit, y_fit)
-            r_yy = torch.func.vmap(torch.func.jacrev(torch.func.jacrev(self.forward, 1), 1))(x_fit, y_fit)
+            diff_r = torch.ones((len(x), self.channels), device=DEVICE).requires_grad_(True)
+            diff_p = torch.ones((len(x)), device=DEVICE).requires_grad_(True)
+
+            r = self.forward(x, y)
+            r_x, = torch.autograd.grad(torch.autograd.grad(r, x, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
+            r_xx, = torch.autograd.grad(torch.autograd.grad(r_x, x, diff_r, create_graph=True), diff_r, diff_p, retain_graph=True)
+            r_y, = torch.autograd.grad(torch.autograd.grad(r, y, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
+            r_yy, = torch.autograd.grad(torch.autograd.grad(r_y, y, diff_r, create_graph=True), diff_r, diff_p, retain_graph=False)
 
             k, v1, v2, f, urk = r[..., 0], r[..., 1], r[..., 2], r[..., 3], r[..., 4:]
             k_x, v1_x, v2_x, urk_x = r_x[..., 0], r_x[..., 1], r_x[..., 2], r_x[..., 4:]
@@ -240,21 +246,23 @@ class Network(nn.Module):
             pde = (  # not particularly pythonic, but easier to read
                 k.unsqueeze(-1) * (urk_xx + urk_yy) + (k_x.unsqueeze(-1) * urk_x + k_y.unsqueeze(-1) * urk_y)
                 - (v1_x.unsqueeze(-1) + v2_y.unsqueeze(-1)) * urk - (v1.unsqueeze(-1) * urk_x + v2.unsqueeze(-1) * urk_y)
-                + f
+                + f.unsqueeze(-1)
             )
 
             uhat_i = urk - dt * torch.einsum('ij,bj->bi', self.rk_A, pde)
             uhat_f = urk - dt * torch.einsum('ij,bj->bi', self.rk_A - self.rk_b.unsqueeze(0), pde)
 
-            results['k'].append(k)
-            results['v1'].append(v1)
-            results['v2'].append(v2)
-            results['f'].append(f)
-            results['uhat_i'].append(uhat_i)
-            results['uhat_f'].append(uhat_f)
+            results['k'].append(torch2np(k))
+            results['v1'].append(torch2np(v1))
+            results['v2'].append(torch2np(v2))
+            results['f'].append(torch2np(f))
+            results['uhat_i'].append(torch2np(uhat_i))
+            results['uhat_f'].append(torch2np(uhat_f))
 
-        for key in results.keys():
-            results[key] = torch2np(torch.cat(results[key])).reshape((len(x_range), len(y_range), -1))
+        for key in ('k', 'v1', 'v2', 'f'):
+            results[key] = np.concat(results[key]).reshape((len(x_range), len(y_range)))
+        for key in ('uhat_i', 'uhat_f'):
+            results[key] = np.concat(results[key]).reshape((len(x_range), len(y_range), self.q))
 
         return results
 
