@@ -14,7 +14,12 @@ from . import layer
 
 
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.cuda.is_available():
+    DEVICE = 'cuda'
+elif torch.xpu.is_available():
+    DEVICE = 'xpu'
+else:
+    DEVICE = 'cpu'
 DTYPE = torch.float32
 
 # dt = 1, right?
