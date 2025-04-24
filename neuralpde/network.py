@@ -17,7 +17,7 @@ from . import layer
 if torch.cuda.is_available():
     DEVICE = 'cuda'
 elif torch.xpu.is_available():
-    pass
+    DEVICE = 'xpu'
 else:
     DEVICE = 'cpu'
 DTYPE = torch.float32
@@ -272,9 +272,9 @@ class Network(nn.Module):
             results['uhat_f'].append(torch2np(uhat_f))
 
         for key in ('k', 'v1', 'v2', 'f'):
-            results[key] = np.concat(results[key]).reshape((len(x_range), len(y_range)))
+            results[key] = np.concatenate(results[key]).reshape((len(x_range), len(y_range)))
         for key in ('uhat_i', 'uhat_f'):
-            results[key] = np.concat(results[key]).reshape((len(x_range), len(y_range), self.q))
+            results[key] = np.concatenate(results[key]).reshape((len(x_range), len(y_range), self.q))
 
         return results
 
