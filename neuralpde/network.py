@@ -343,7 +343,6 @@ class Network(nn.Module):
                 mi = mask_inte[indices[0, idx], indices[1, idx]]
                 mb = mask_peri[indices[0, idx], indices[1, idx]]
 
-
             r = self.forward(x, y)
             r_x, = torch.autograd.grad(torch.autograd.grad(r, x, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
             r_xx, = torch.autograd.grad(torch.autograd.grad(r_x, x, diff_r, create_graph=True), diff_r, diff_p, create_graph=True)
