@@ -1,12 +1,13 @@
 import argparse
 import datetime
+import matplotlib.colors
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
 
 from dateutil import parser as dateparser
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Callable
 
 import neuralpde
 
@@ -23,10 +24,16 @@ DEFAULTS_BATCH_SIZE = 200
 DEFAULTS_SHUFFLE = 10
 DEFAULTS_LR = 1e-3
 
+def cmap_transparent(cmap: str, transform: Callable, n: int = 256):
+    colors = plt.get_cmap(cmap)(np.arange(n))
+    colors[:, -1] = transform(np.linspace(0, 1, n))
+    return matplotlib.colors.ListedColormap(colors)
+
 CMAP_ICE = plt.get_cmap('Blues_r')
 CMAP_ICE.set_bad(color='tan')
-CMAP_ERR = plt.get_cmap('RdYlGn_r')
+CMAP_ERR = cmap_transparent('Reds', lambda x: x)
 CMAP_ERR.set_bad(color='tan')
+CMAP_ERR.set_over(color='darkmagenta')
 CMAP_PARAM = plt.get_cmap('jet')
 CMAP_PARAM.set_bad(color='tan')
 
@@ -66,10 +73,13 @@ def plot(x_scale: float, y_scale: float,
     ax.set_ylabel('Distance (km)')
 
     ax = axes[0, 1]
-    d = hide(np.abs(solution[0] - np.mean(r['uhat_i'], -1)), mask)
+    d1 = hide(np.mean(r['uhat_i'], -1), mask)
+    d2 = hide(np.abs(solution[0] - np.mean(r['uhat_i'], -1)), mask)
+    ax.pcolormesh(x_range * x_scale, y_range * y_scale,
+                  d1.T, vmin=0., vmax=1., cmap=CMAP_ICE)
     p = ax.pcolormesh(x_range * x_scale, y_range * y_scale,
-                      d.T, cmap=CMAP_ERR, **vrange(d, 0.))
-    c = fig.colorbar(p, ax=ax)
+                      d2.T, cmap=CMAP_ERR, vmin=0., vmax=0.3)
+    c = fig.colorbar(p, ax=ax, extend='max')
     c.set_label('Absolute Error')
 
     ax = axes[0, 2]
@@ -80,10 +90,13 @@ def plot(x_scale: float, y_scale: float,
     c.set_label('Fractional Sea Ice Concentration')
 
     ax = axes[0, 3]
-    d = hide(np.abs(solution[1] - np.mean(r['uhat_f'], -1)), mask)
+    d1 = hide(np.mean(r['uhat_f'], -1), mask)
+    d2 = hide(np.abs(solution[1] - np.mean(r['uhat_f'], -1)), mask)
+    ax.pcolormesh(x_range * x_scale, y_range * y_scale,
+                  d1.T, vmin=0., vmax=1., cmap=CMAP_ICE)
     p = ax.pcolormesh(x_range * x_scale, y_range * y_scale,
-                      d.T, cmap=CMAP_ERR, **vrange(d, 0.))
-    c = fig.colorbar(p, ax=ax)
+                      d2.T, cmap=CMAP_ERR, vmin=0., vmax=0.3)
+    c = fig.colorbar(p, ax=ax, extend='max')
     c.set_label('Absolute Error')
 
     ax = axes[1, 0]
@@ -118,6 +131,9 @@ def plot(x_scale: float, y_scale: float,
     c = fig.colorbar(p, ax=ax)
     c.set_label('Forcing\n(fractional sea ice per hour)')
     ax.set_xlabel('Distance (km)')
+
+    for ax in axes.flatten():
+        ax.set_aspect('equal')
 
     fig.tight_layout()
     if show:
