@@ -217,7 +217,23 @@ There are some assumptions that can mitigate this problem.  For example, if we a
 
 
 ### PINNs for the Vector Field-Parameterized Forced Advection-Diffusion Inverse Problem
-This section can be thought of a generalization of the ideas in the previous section, while adhering to the desire to analytically compute an accurate solution by means of a sufficiently accurate Runge-Kutta integration scheme.  Herein I discuss how I've implemented the ideas from Raissi et al. 2019 to the problem and data of forced advection-diffusion of sea ice.
+This section can be thought of a generalization of the ideas in the previous section.  Herein I discuss how I've implemented the ideas from Raissi et al. 2019 to the problem and data of forced advection-diffusion of sea ice.
+
+Recall that we wish to extract the parameterization of the PDE,
+```math
+    u_t = \nabla \cdot \left( \kappa \nabla u \right) - \nabla \cdot (\vec{v}  u) + f
+```
+where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v_1, v_2)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
+
+NOAA/NSIDC provides sea ice concentration data on a rectangular spacetime grid like $u(t^n, x_i, y_j)$ where $n = 0, \dots, N_t$ times at which the concentration field is measured at $i = 1, \dots, N_x$ and $j = 1, \dots, N_y$ locations in space.
+
+Similar to the formulation in Raissi, we construct a PINN $P$ to yield the parameters $\kappa, v_1, v_2, f$ and $q$ Runge-Kutta stages.  However, we extend the formulation to assume spatially-varying parameters,
+```math
+[\hat{\kappa}, \hat{v}_1, \hat{v}_2, \hat{f}, \hat{u}^{n+c_1}, \hat{u}^{n+c_1}, \dots, \hat{u}^{n+c_q}] = P(x_i, y_j).
+```
+In contrast to Raissi where it is assumed the parameters $\lambda$ are spatially constant (and have no dependence on spatiotemporal coordinate,) we assume the parameter estimates *are* spatially varying, and interpret the outputs of the PINN as $\hat{\kappa}(x_i, y_j), \hat{v}_1(x_i, y_j), \hat{v}_2(x_i, y_j), \hat{f}(x_i, y_j), \hat{u}^{n+c_1}(x_i, y_j), \hat{u}^{n+c_1}(x_i, y_j), \dots, \hat{u}^{n+c_q}(x_i, y_j)$.
+
+Like Raissi, from these estimates of parameters and intermediate Runge-Kutta stages, we predict the solution at temporal endpoints of the interval $u(t^n, x_i, y_j)$ and $u(t^{n+1}, x_i, y_j)$ for all $i, j$.
 
 
 ### The Endgame
