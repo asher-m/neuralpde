@@ -121,18 +121,34 @@ and, generally for a subset $S^* \subset S$,
     \lambda^{S^*}   & & \sim & & & \{\lambda(t^s, x^s)\}_{s \in S^*} \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ at every } s \in S^*.
 \end{aligned}
 ```
-As in the former discussion of the application of PINNs to the sea ice problem, for any quantity $\phi \in (u, \lambda)$, I will represent its estimate as $\hat{\phi}$.  Similarly, for any quantity $\phi \in (u, \lambda, \hat{u}, \hat{\lambda})$, I will notate its derivative with respect to a parameter $\chi$ as $\phi_\chi := \partial_\chi \phi$. 
+For any quantity ($u$ or $\lambda$,) I will represent its estimate with a hat, ($\hat{u}$ or $\hat{\lambda}$, respectively.)  Similarly, for any quantity, I will notate its derivative with respect to a(n arbitrary) parameter ($\chi$) with a subscript of that parameter, ($u_x := \partial_\chi u$ or $\lambda_x := \partial_\chi \lambda$,) unless the use of such notation is unclear or conflicts with other necessary subscripts. 
 
-There are at least two important subsets of $S$,
+Finally, there are at least two important subsets of $S$,
 ```math
 \begin{aligned}
     S^\Gamma                & & \sim & & & \text{the set of sample points in } \Gamma \\
     S^{\partial\Gamma}      & & \sim & & & \text{the set of sample points on } \partial\Gamma.
 \end{aligned}
 ```
-We now return to the consideration of PINNs for the general inverse PDE problem.
+These will be useful when discussing boundary conditions and the enforcement of physics on the interior of the domain $\Gamma$.
 
-Summarily: we have $N_S$ sampled points $(t^S, x^S, u^S)$, and we want to find approximations for $u(t, x)$ and $\lambda(t, x)$.
+For now, that's all that comes to mind for important quantities and notation, so we shall proceed with our discussion of the PINN framework.
+
+
+## The Approach
+### PINNs in the General Inverse Problem Context
+For inverse problems, PINNs are generally constructed as solution operators for a PDE with unknown parameterization.  In particular, we learn *both* the solution and unknown parameters $\lambda$ of the (possibly nonlinear) differential operator $D$.  Then, by construction, the PINN is itself a solution to the PDE for the interior of the parabolic boundary (in the terminology of Evans, see 2e p.52.)
+
+Suppose we have the problem,
+```math
+\begin{aligned}
+    u_t - D[u; \lambda] &= 0 & &\text{in } \Gamma \\
+    u &= g & &\text{on } \partial\Gamma
+\end{aligned}
+```
+where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of spacetime, the solution $u : \overline{\Gamma} \rightarrow \mathbb{R}$, parameterization $\lambda : \overline{\Gamma} \rightarrow \mathbb{R}^{N_\lambda}$ is some collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.
+
+Suppose we have $N_S$ sampled points $(t^S, x^S, u^S)$ representing the space, time, and value of the solution at each sampled point, and we want to find for $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$.
 
 We approximate $u(t, x)$ and $\lambda(t, x)$ with a *physics-informed neural network* $P$ as
 ```math
