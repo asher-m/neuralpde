@@ -2,6 +2,12 @@
 Research code for solving the forced advection-diffusion inverse problem for polar sea ice concentration.
 
 
+#### Note on GitHub Markdown
+This document, unfortunately, renders in a way that is neither aesthetically pleasing nor easy to read in GitHub's markdown renderer with MathJax.
+
+The author's suggestion is to open this file in VSCode, with a Markdown renderer extension installed, or in another Markdown viewer, such as Obsidian, to view this file. 
+
+
 #### Note on This Document
 While it is my hope that this summary of the methods and current work can always be complete, correct, and concise, it is the case that this page serves as a place to record ideas and thoughts on how to proceed, which, by their nature, can virtually never satisfies those desirable qualities.
 
