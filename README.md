@@ -220,6 +220,12 @@ Finally then, we compute a loss as some suitable norm of the errors of these est
 ```
 for $i = 1, \dots, q$.
 
+Finally, it is worthwhile to comment on the choice of $q$: Raissi chooses $q$ to yield suitable (desirable) accuracy of the solution and, in fact, demonstrates that *very large* choices of $q$ are compatible with the method presented in the paper and yield improved accuracy of the solution.
+
+A straightforward but helpful reminder is that the data on which one wishes to apply this method must satisfy the CFL condition for the PDE being studied, (and note that this has no relation to the choice of $q$.)
+
+<!-- Add comment on how to sample data, if that makes sense, as well as expand on CFL condition. -->
+
 
 #### Uniqueness of $\lambda$
 As a simple example of why it is necessary to assume $\lambda$ is constant on the interval $(t^n, t^{n+1})$ is to consider the advection equation,
