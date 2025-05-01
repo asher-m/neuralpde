@@ -229,66 +229,74 @@ Recall that we wish to extract the parameterization of the PDE,
 ```math
     u_t = \nabla \cdot \left( \kappa \nabla u \right) - \nabla \cdot (\vec{v}  u) + f
 ```
-where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v_1, v_2)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.
+where space $x \in \mathbb{R}^2$, time $t \in \mathbb{R}^+$, the diffusion field $\kappa : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$, the velocity field $(v_1, v_2)^T =: \vec{v} : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}^2$, the forcing term $f : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ corresponding to ice freeze and thaw, and sea ice concentration $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$.  *In particular,* note that we, in fact, do not care about a solution operator.
 
-NOAA/NSIDC provides sea ice concentration data on a rectangular spacetime grid like $u(t^n, x_i, y_j)$ where $n = 0, \dots, N_t$ times at which the concentration field is measured at $i = 1, \dots, N_x$ and $j = 1, \dots, N_y$ locations in space.
+NOAA/NSIDC provides sea ice concentration data on a rectangular spacetime grid like $u(x_j, y_k, t^n)$ where $n = 0, \dots, N_t$ times at which the concentration field is measured at $j = 1, \dots, N_x$ and $k = 1, \dots, N_y$ locations in space.
 
-Similar to the formulation in Raissi, we construct a PINN $P$ to yield the parameters $\kappa, v_1, v_2, f$ and $q$ Runge-Kutta stages.  However, we extend the formulation to assume spatially-varying parameters,
+In order to establish uniqueness of the parameterization, we assume the parameters $\kappa, v_1, v_2, f$ are constant on any particular interval $(t^n, t^{n+1})$.  This assumption derives from [the discussion above on uniqueness](#uniqueness-of) of parameterization of the PDE.
+
+We construct a PINN $P$, conditioned on a collection of solutions about the timestep in study ([more on this below](#expressivity-of-the-neural-network-and-conditioning-on-the-solution),) to yield the parameters $\kappa, v_1, v_2, f$ and the solution at each of $q$ Runge-Kutta stages.  Additionally, we extend Raissi's formulation to assume spatially-varying parameters,
 ```math
-[\hat{\kappa}, \hat{v}_1, \hat{v}_2, \hat{f}, \hat{u}^{n+c_1}, \hat{u}^{n+c_1}, \dots, \hat{u}^{n+c_q}] = P(x_i, y_j).
+[\hat{\kappa}^n, \hat{v}_1^n, \hat{v}_2^n, \hat{f}^n, \hat{u}^{n+c_1}, \hat{u}^{n+c_1}, \dots, \hat{u}^{n+c_q}] = P(x_j, y_k; \{\dots, u^{n-1}, u^{n}, u^{n+1}, \dots\}).
 ```
-In contrast to Raissi where it is assumed the parameters $\lambda$ are spatially constant (and have no dependence on spatiotemporal coordinate,) we assume the parameter estimates *are* spatially varying, and interpret the outputs of the PINN as $\hat{\kappa}(x_i, y_j), \hat{v}_1(x_i, y_j), \hat{v}_2(x_i, y_j), \hat{f}(x_i, y_j), \hat{u}^{n+c_1}(x_i, y_j), \hat{u}^{n+c_1}(x_i, y_j), \dots, \hat{u}^{n+c_q}(x_i, y_j)$.
+where it is undestood that $\hat{\kappa}^n$, $\hat{v}_1^n$, $\hat{v}_2^n$, $\hat{f}^n$, and $\hat{u}^{n+c_1}$, $\hat{u}^{n+c_1}, \dots, \hat{u}^{n+c_q}$ are functions of the spatial coordinate as $\hat{\kappa}^n(x_j, y_k)$, $\hat{v}_1^n(x_j, y_k)$, $\hat{v}_2^n(x_j, y_k)$, $\hat{f}^n(x_j, y_k)$, $\hat{u}^{n+c_1}(x_j, y_k)$, and $\hat{u}^{n+c_1}(x_j, y_k), \dots, \hat{u}^{n+c_q}(x_j, y_k)$.
 
-Like Raissi, from these estimates of parameters and intermediate Runge-Kutta stages, we predict the solution at temporal endpoints of the interval $u(t^n, x_i, y_j)$ and $u(t^{n+1}, x_i, y_j)$ for all $i, j$.
-
-
-### The Endgame
-Right now, what we want really isn't too complex:
-<p align="center">
-  <img src="readme-figure/complete-diagram.drawio.svg"/>
-</p>
-
-Notationally, we use $u$ to denote experimental measurements of the solution, which we assume to be exact measurements of the true solution at discrete locations, $\tilde{u}$ to denote the approximate solution calculated using estimates $\tilde{\kappa}$, $\tilde{v}$, and $\tilde{f}$ of the true PDE parameters $\kappa$, $v$, and $f$.
-
-All that said, things get a little more complicated when we begin to understand the complexity required to train such a PINN.  Right now, this seems like a sensible loss function:
-```math
-    L = \left\| u(t_{n+1}) - \tilde{u}(t_{n+1}) \right\|_\Gamma + \left\| u_t(t_n) - \nabla \cdot \left( \tilde{\kappa}(t_n) \nabla u(t_n) \right) - \tilde{v}(t_n) \cdot \nabla u(t_n) - \tilde{f}(t_n) \right\|_\Gamma
-```
-This loss function corresponds to this information diagram:
-<p align="center">
-  <img src="readme-figure/complete-loss.drawio.svg"/>
-</p>
-
-Read [this section](#pinns-in-the-general-inverse-problem-context) about why this is a sensible choice.
-
-
-#### Note on a small problem
-This loss function does not enforce $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow [0, 1]$!
-
-
-### Current Work
-Right now, we've simplified the bigger picture and are attempting to learn (with reference to the relevant literature) the diffusion parameter $\kappa$ of a diffusion-type PDE,
+From these estimates of parameters and intermediate Runge-Kutta stages, we predict the solution at temporal endpoints of the interval, that is the quantities $u(t^n, x_j, y_k)$ and $u(t^{n+1}, x_j, y_k)$.  However, because we have measurements at dense, regular (rectangular) spacetime coordinates, we predict the solution at endpoints for all for all $i, j$.  Our loss (formulated as Raissi) becomes,
 ```math
 \begin{aligned}
-    u_t &= \nabla \cdot \left( \kappa \nabla u \right) & &\text{in } \Gamma \\
-    u &= g & &\text{on } \partial\Gamma
+    L &= \sum_{i=1}^q \left[ L^{n}_i + L^{n+1}_i \right], & &\text{where} \\
+    L^{n}_i &= \sum_{j, k} \left| \hat{u}^{n}_i(x_j, y_k) - u^{n}_i(x_j, y_k) \right|^2 & &\text{and} \\
+    L^{n+1}_i &= \sum_{j, k} \left| \hat{u}^{n+1}_i(x_j, y_k) - u^{n+1}_i(x_j, y_k) \right|^2
 \end{aligned}
 ```
-where $u : \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$ and $\kappa: \mathbb{R}^2 \times \mathbb{R}^+ \rightarrow \mathbb{R}$.
 
-The structure of this algorithm is shown in this figure:
-<p align="center">
-  <img src="readme-figure/diffusion-diagram.drawio.svg"/>
-</p>
-
-A sensible loss function, analogous to that discussed in [this section](#pinns-in-the-general-inverse-problem-context), seems to be as follows:
+In practice, we add additional terms to our loss to obtain desirable physical properties of the solution.  To assert well-posedness of this problem, we add the following loss terms (encoding necessary conditions to ensure a unique solution,)
 ```math
-    L = \left\| u(t_{n+1}) - \tilde{u}(t_{n+1}) \right\|_\Gamma + \left\| u_t(t_n) - \nabla \cdot \left( \tilde{\kappa}(t_n) \nabla u(t_n) \right) \right\|_\Gamma
+\begin{aligned}
+    L_\kappa &= | \kappa | & &\text{minimality of } \kappa \\
+    L_{\vec{v}} &= | v_1^2 + v_2^2 | & &\text{minimality of } \vec{v} \\
+    L_f &= | f | & &\text{minimality of } f \\
+    L_{\nabla \kappa} &= | \kappa_x^2 + \kappa_y^2 | & &\text{regularity of } \kappa \\
+    L_{\nabla \vec{v}} &= | (v_1)_x^2 + (v_1)_y^2 + (v_2)_x^2 + (v_2)_y^2 | & &\text{regularity of } \vec{v}.
+\end{aligned}
 ```
-which corresponds to this information diagram:
-<p align="center">
-  <img src="readme-figure/diffusion-loss.drawio.svg"/>
-</p>
+
+
+#### Expressivity of the Neural Network and Conditioning on the Solution
+Perhaps the most significant innovation of the method I present here is conditioning the network against the known solution.  To my knowledge, the analytic tools to quantitatively understand the need to pursue this method do not exist.  Instead, I will try to qualitatively motivate this technique, novel in the PINN framework: our domain is approximately $300 \times 400 \times 20,000 \sim 10^9$ coordinate-data pairs, each with conceivably different (though likely similar) parameterization and solution to the PDE.  The expressivity, and thus scale of a network, required to capture the features of these data is significant and conceivably beyond the computational limitations of consumer hardware.  Furthermore, as our interest is primarily in extracting the parameterization of the PDE, we lose nothing by allowing the PINN to "peak" at the solution.  (For this last point, it is worth noting that we can choose the solutions we allow the PINN to see, thus regaining the ability to construct predictions, depending on the exact construction on the PINN.)  By conditioning the network on the solution, we reduce the size of the network while maintaining its expressivity and thus its ability to capture the solution and parameterization of the PDE.
+
+In fact, we can do better: by conditioning the network on Gaussian kernels at nodes of a stencil local to a given spacetime coordinate, we further reduce the size of the network while maintaining locality and speficity of the information provided to the deep (hidden) layers of the network.  This is in contrast to the typical architecture of transformer-type networks (as ours may be classified) which typically use convolutional layers, smearing away high-frequency information on which our solution and parameters depend.
+
+For these reasons, I present a novel method (albeits familiar to other domains) to encode the solution in a computationally-lightweight manner: convolution of the solution against a stencil of Gaussian kernels about the spacetime coordinate in study.
+
+
+##### Convolution Against the Solution: An Example
+The exact method is best described simply by example.
+
+We are interested in the parameters of our PDE on an interval $(t^n, t^{n+1})$ at the location $(x_j, y_k)$.  Our solution has "inertia," so it's conceivable that we should provide both historical and future information around this interval.  We choose 6 timesteps, $\{t^{n-2}, t^{n-1}, t^{n}, t^{n+1}, t^{n+2}, t^{n+3}\}$, on which to condition our model.  For generality's sake, I'll refer to the number of timesteps on which to condition the model as the *window*.  In this example, the window has width $w_w = 6$ (the total number of timesteps in the window) and offset $w_o = -2$ (the first timestep convolved against relative to timestep $n$, respectively $t^n$.)
+
+A [quick search](https://www.google.com/search?q=how+fast+does+an+iceberg+travel) yields that the maximum velocity of detached (mobile) ice in the ocean—that is, an iceberg—is approximately 4 km/h, and, in general, much slower.  With 25 km grid spacing, as in the NOAA/NSIDC g02202 data, we estimate the domain of dependence of our PDE to be enclosed in a five-by-five grid stencil in space.  We'll refer to the side length of this stencil as $r$, that is, $r = 5$.
+
+Altogether, we have constructed a $w_w \times r \times r = 6 \times 5 \times 5$ stencil in spacetime, where each point corresponds to a spacetime location at which the solution was sampled.
+
+We construct a set $C^n_{jk}$ of discrete convolutions of the solution against Gaussian kernels positioned at each spacetime coordinate in the convolution stencil, as,
+```math
+C^n_{jk} = \bigcup_{n'=n+w_o}^{w_w} \bigcup_{j'=j-\lfloor{r/2\rfloor}}^{\lfloor{r/2\rfloor}} \bigcup_{k'=k-\lfloor{r/2\rfloor}}^{\lfloor{r/2\rfloor}} \left( \sum_{j''=1}^{N_x} \sum_{k''=1}^{N_y} u^{n'}(x_{j''}, y_{k''}) \cdot \exp{\left[ -\frac{1}{2\sigma^2} \left( (x_{j''} - x_{j'})^2 + (y_{k''} - y_{k'})^2 \right) \right]} \right)
+```
+where $\sigma$ is a learnable parameter.
+
+An obvious extension (though, as of May, 2025, I have yet to implement this,) is to convolve in time as well, as,
+```math
+C^n_{jk} = \bigcup_{n'=n+w_o}^{w_w} \bigcup_{j'=j-\lfloor{r/2\rfloor}}^{\lfloor{r/2\rfloor}} \bigcup_{k'=k-\lfloor{r/2\rfloor}}^{\lfloor{r/2\rfloor}} \left( \sum_{n''=0}^{N_t} \sum_{j''=1}^{N_x} \sum_{k''=1}^{N_y} u^{n''}(x_{j''}, y_{k''}) \cdot \exp{\left[ -\frac{1}{2\sigma_{xy}^2} \left( (x_{j''} - x_{j'})^2 + (y_{k''} - y_{k'})^2 \right) -\frac{1}{2\sigma_t^2} (t^{n''} - t^{n'})^2 \right]} \right)
+```
+where $\sigma_{xy}$ and $\sigma_t$ are learnable parameters.
+
+In practice, we clip the exponentials used in the computation of each of these convolutions in order to avoid loading data that only minorly contributes to the solution.  This is substantiated by observing that $\sigma$ or $\sigma_{xy}$ and $\sigma_t$, respectively, train to values inside the width of one spacetime cell.
+
+
+#### Returning to the Broader Problem
+
+The set of convolutions $C_{jk}^n$ is then fed into a sufficiently-deep stack of fully-connected layers that compute the output features $\hat{\kappa}^n(x_j, y_k)$, $\hat{v}_1^n(x_j, y_k)$, $\hat{v}_2^n(x_j, y_k)$, $\hat{f}^n(x_j, y_k)$, $\hat{u}^{n+c_1}(x_j, y_k)$, and $\hat{u}^{n+c_1}(x_j, y_k), \dots, \hat{u}^{n+c_q}(x_j, y_k)$.
 
 
 ## Diagrams
