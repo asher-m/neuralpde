@@ -13,6 +13,9 @@ import neuralpde
 
 
 
+RESAMPLE = 1000
+""" Number of times to train on each data point.  Used to calculate number of epochs from batch size. """
+
 DEFAULTS_T = 2
 DEFAULTS_OFFSET = 0
 DEFAULTS_Q = 4
@@ -31,7 +34,7 @@ def cmap_transparent(cmap: str, transform: Callable, n: int = 256):
 
 CMAP_ICE = plt.get_cmap('Blues_r')
 CMAP_ICE.set_bad(color='tan')
-CMAP_ERR = cmap_transparent('Reds', lambda x: x)
+CMAP_ERR = cmap_transparent('RdYlGn_r', np.vectorize(lambda x: (5/3 * x) if x <= 0.3 else ((1 - 0.5) / (1 - 0.3) * (x - 1) + 1)))
 CMAP_ERR.set_bad(color='tan')
 CMAP_ERR.set_over(color='darkmagenta')
 CMAP_PARAM = plt.get_cmap('jet')
@@ -230,7 +233,7 @@ def main(date,
         net.fit(solution, x_range, y_range,
                 mask_i, mask_p,
                 weights=weights, batch_size=batch_size,
-                epochs=epochs if epochs else len(x_range) * len(y_range) // batch_size * 50,
+                epochs=epochs if epochs else len(x_range) * len(y_range) // batch_size * RESAMPLE,
                 shuffle=shuffle, lr=lr)
 
     if save: net.save(save)
