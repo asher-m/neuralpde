@@ -3,9 +3,9 @@ Research code for solving the forced advection-diffusion inverse problem for pol
 
 
 #### Note on GitHub Markdown
-This document, unfortunately, renders in a way that is neither aesthetically pleasing nor easy to read in GitHub's markdown renderer with MathJax.
+On GitHub, this document renders in a way that is neither aesthetically pleasing nor easy to read.
 
-The author's suggestion is to open this file in VSCode, with a Markdown renderer extension installed, or in another Markdown viewer, such as Obsidian, to view this file. 
+The author's suggestion is to open this file in VSCode, with a Markdown renderer extension installed, or in another Markdown viewer, such as Obsidian. 
 
 
 #### Note on This Document
