@@ -43,19 +43,19 @@ Suppose we have the PDE,
 To facilitate discussion of this PDE, we will adopt the following general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
 ```math
 \begin{aligned}
-    t^s             & & \sim & & & \text{the time corresponding to the } s^{th} \text{ sample} \\
     x^s             & & \sim & & & \text{the location corresponding to the } s^{th} \text{ sample like } ( x^s_n )_{n=1}^N =: x^s \in \mathbb{R}^N \\
-    u^s             & & \sim & & & u(t^s, x^s) \text{, the true (experimental) value of } u \text{ at } (t^s, x^s) \\
-    \lambda^s       & & \sim & & & \lambda(t^s, x^s) \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ like } (\lambda_n)_{n=1}^{N_\lambda} =: \lambda^s \in \mathbb{R}^{N_\lambda},
+    t^s             & & \sim & & & \text{the time corresponding to the } s^{th} \text{ sample} \\
+    u^s             & & \sim & & & u(x^s, t^s) \text{, the true (experimental) value of } u \text{ at } (x^s, t^s) \\
+    \lambda^s       & & \sim & & & \lambda(x^s, t^s) \text{, the true (underlying) value of } \lambda \text{ at } (x^s, t^s) \text{ like } (\lambda_n)_{n=1}^{N_\lambda} =: \lambda^s \in \mathbb{R}^{N_\lambda},
 \end{aligned}
 ```
 and, generally for a subset $S^* \subset S$,
 ```math
 \begin{aligned}
-    t^{S^*}         & & \sim & & & \{ t^s \}_{s \in S^*} \text{, the time corresponding to the } s^{th} \text{ sample at every } s \in S^* \\
     x^{S^*}         & & \sim & & & \{ x^s \}_{s \in S^*} \text{, the location corresponding to the } s^{th} \text{ sample at every } s \in S^* \\
-    u^{S^*}         & & \sim & & & \{u(t^s, x^s)\}_{s \in S^*} \text{, the true (experimental) value of } u \text{ at } (t^s, x^s) \text{ at every } s \in S^* \\
-    \lambda^{S^*}   & & \sim & & & \{\lambda(t^s, x^s)\}_{s \in S^*} \text{, the true (underlying) value of } \lambda \text{ at } (t^s, x^s) \text{ at every } s \in S^*.
+    t^{S^*}         & & \sim & & & \{ t^s \}_{s \in S^*} \text{, the time corresponding to the } s^{th} \text{ sample at every } s \in S^* \\
+    u^{S^*}         & & \sim & & & \{u(x^s, t^s)\}_{s \in S^*} \text{, the true (experimental) value of } u \text{ at } (x^s, t^s) \text{ at every } s \in S^* \\
+    \lambda^{S^*}   & & \sim & & & \{\lambda(x^s, t^s)\}_{s \in S^*} \text{, the true (underlying) value of } \lambda \text{ at } (x^s, t^s) \text{ at every } s \in S^*.
 \end{aligned}
 ```
 For any quantity ($u$ or $\lambda$,) I will represent its estimate with a hat, ($\hat{u}$ or $\hat{\lambda}$, respectively.)  Similarly, for any quantity, I will notate its derivative with respect to a(n arbitrary) parameter ($\chi$) with a subscript of that parameter, ($u_x := \partial_\chi u$ or $\lambda_x := \partial_\chi \lambda$,) unless the use of such notation is unclear or conflicts with other necessary subscripts. 
@@ -85,14 +85,14 @@ Suppose we have the problem,
 ```
 where $\Gamma \subset\mathbb{R}^N \times \mathbb{R}^+$ some open subset of spacetime, the solution $u : \overline{\Gamma} \rightarrow \mathbb{R}$, parameterization $\lambda : \overline{\Gamma} \rightarrow \mathbb{R}^{N_\lambda}$ is some collection of parameters, and the boundary condition $g : \partial\Gamma \rightarrow \mathbb{R}$.
 
-Suppose we have $N_S$ sampled points $(t^S, x^S, u^S)$ representing the space, time, and value of the solution at each sampled point, and we want to find for $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$.
+Suppose we have $N_S$ sampled points $(x^S, t^S, u^S)$ representing the space, time, and value of the solution at each sampled point, and we want to find for $\hat{u}(x, t)$ and $\hat{\lambda}(x, t)$.
 
-We approximate $u(t, x)$ and $\lambda(t, x)$ with a *physics-informed neural network* $P$ as
+We approximate $u(x, t)$ and $\lambda(x, t)$ with a *physics-informed neural network* $P$ as
 ```math
-\left[ \hat{u}(t, x), \hat{\lambda}(t, x) \right] = P(t, x).
+\left[ \hat{u}(x, t), \hat{\lambda}(x, t) \right] = P(x, t).
 ```
 
-Conditioned on the complexity of the network and *not* subject to additional assumptions (e.g., about the PDE or solution,) the PINN $P$ reproduces optimal approximations $\hat{u}(t, x)$ and $\hat{\lambda}(t, x)$ to $u(t, x)$ and $\lambda(t, x)$, respectively, by minimizing the loss,
+Conditioned on the complexity of the network and *not* subject to additional assumptions (e.g., about the PDE or solution,) the PINN $P$ reproduces optimal approximations $\hat{u}(x, t)$ and $\hat{\lambda}(x, t)$ to $u(x, t)$ and $\lambda(x, t)$, respectively, by minimizing the loss,
 ```math
 \begin{aligned}
     L &= \biggl\| \hat{u}^s - u^s \biggr\|_{s \in S} + \biggl\| \hat{u}_t^s -  D\left[\hat{u}^s; \hat{\lambda}^s\right] \biggr\|_{s \in S^\Gamma} \\
