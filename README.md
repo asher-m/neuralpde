@@ -166,12 +166,11 @@ Specfically, our PINN has yielded estimates of the solution $\hat{u}^{n + c_1}(x
 Finally then, we compute a loss as some suitable norm of the errors of these estimates for the solution at each $x^{S^n}$ and $x^{S^{n+1}}$,
 ```math
 \begin{aligned}
-    L &= L^{n}_i + L^{n+1}_i, & &\text{where} \\
+    L &= \sum_{i=1}^q \left[ L^{n}_i + L^{n+1}_i \right], & &\text{where} \\
     L^{n}_i &= \left\| \hat{u}^{n}_i(x^{S^n}) - u^{S^n} \right\| & &\text{and} \\
-    L^{n+1}_i &= \left\| \hat{u}^{n+1}_i(x^{S^{n+1}}) - u^{S^{n+1}} \right\|
+    L^{n+1}_i &= \left\| \hat{u}^{n+1}_i(x^{S^{n+1}}) - u^{S^{n+1}} \right\|.
 \end{aligned}
 ```
-for $i = 1, \dots, q$.
 
 Finally, it is worthwhile to comment on the choice of $q$: Raissi chooses $q$ to yield suitable (desirable) accuracy of the solution and, in fact, demonstrates that *very large* choices of $q$ are compatible with the method presented in the paper and yield improved accuracy of the solution.
 
