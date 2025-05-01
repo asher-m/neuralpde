@@ -370,7 +370,7 @@ class Network(nn.Module):
 
             # compute other loss terms
             loss_bc = torch.sum(mb * (v1**2 + v2**2)) + torch.sum(mb * k**2)
-            loss_k_reg = torch.sum(mi * (k_x**2 + k_y**2)) + torch.sum(mi * torch.minimum(k, torch.tensor(0, device=DEVICE))**2)
+            loss_k_reg = torch.sum(mi * (k_x**2 + k_y**2)) + torch.sum(mi * k**2)
             loss_v_reg = torch.sum(mi * (v1_x**2 + v1_y**2 + v2_x**2 + v2_y**2))
             loss_f_min = torch.sum(mi * (f**2))
 
