@@ -33,7 +33,14 @@ The problem may be called an *anisotropic forced advection-diffusion problem.*
 ## Notation
 This is a particularly notation-heavy discussion, so let's establish some quantities.  This is going to seem exhaustive (and/or exhausting,) but the point here is to establish a pattern so we don't have to worry (too much) about the quantities considered.
 
-We will adopt the following more general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
+Suppose we have the PDE,
+```math
+\begin{aligned}
+    u_t - D[u; \lambda] &= 0 & &\text{in } \Gamma \\
+    u &= g & &\text{on } \partial\Gamma.
+\end{aligned}
+```
+To facilitate discussion of this PDE, we will adopt the following general notation: let some index set $S = \{ s \}_{s=1}^{N_S}$ represent an enumeration of all sampled points for $N_S$ total samples.  Then,
 ```math
 \begin{aligned}
     t^s             & & \sim & & & \text{the time corresponding to the } s^{th} \text{ sample} \\
